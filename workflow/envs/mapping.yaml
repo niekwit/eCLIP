@@ -1,0 +1,8 @@
+name: mapping
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - star=2.7.11a
+  - multiqc=1.18

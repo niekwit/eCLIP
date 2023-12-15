@@ -1,0 +1,10 @@
+name: trim
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>3.10
+  - umi_tools=1.1.4
+  - cutadapt=4.6
+  - pigz
