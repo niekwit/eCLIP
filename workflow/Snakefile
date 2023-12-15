@@ -1,4 +1,61 @@
-# Main entrypoint of the workflow. 
-# Please follow the best practices: 
-# https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html,
-# in particular regarding the standardized folder structure mentioned there. 
+import os
+import datetime
+from scripts.resources import Resources
+from scripts import general_functions as utils
+from snakemake.utils import min_version
+
+# set minimum snakemake version
+min_version("6.4.1")
+
+# load config file
+configfile: "config/config.yaml"
+
+# load genome resources
+resources = Resources(config["genome"], 
+                      config["ensembl_genome_build"])
+
+# load barcode information
+barcodes = utils.Barcodes(config)
+
+# load samples
+SAMPLES = utils.import_samples()
+
+# load barcode length and set bc-pattern values for umi-tools
+bc_length = config["barcode_length"]
+bc_pattern = "N" * bc_length
+
+# import rules
+include: "rules/resources.smk"
+include: "rules/umi.smk"
+include: "rules/trim.smk"
+include: "rules/align.smk"
+include: "rules/deduplication.smk"
+include: "rules/bigwig.smk"
+include: "rules/pureclip.smk"
+include: "rules/qc.smk"
+#include: "rules/usable_reads.smk"
+
+# set target rule
+rule all:
+    input:
+        expand("results/bigwig/{sample}.bw", sample=SAMPLES),
+        expand("results/mapped/{sample}/{sample}_sorted.dedup.bam.flagstat", sample=SAMPLES),
+        expand("results/pureclip/crosslink_sites_{sample}.bed", sample=SAMPLES),
+        expand("results/pureclip/binding_regions_{sample}.bed", sample=SAMPLES),
+        expand("results/pureclip/par_{sample}.txt", sample=SAMPLES),
+        "results/qc/multiqc_trimmed_reads/multiqc.html",
+        "results/qc/multiqc_dedup_flagstat/multiqc.html",
+        expand("results/homer/annotated_regions_{sample}.txt", sample=SAMPLES),
+
+# save snakemake terminal output to log file
+time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+snake_log = f"logs/snakemake/{time}_snakemake.log"
+os.makedirs("logs/snakemake", exist_ok=True)
+
+onsuccess: 
+    shell("cp -v {log} {snake_log}")
+    print("Analysis finished successfully!")
+onerror:
+    shell("cp -v {log} {snake_log}")
+    print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
+
