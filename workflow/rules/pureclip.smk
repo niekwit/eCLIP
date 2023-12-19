@@ -60,15 +60,15 @@ rule common_CL_motifs:
         "../scripts/common_CL_motifs.sh"
 
 
-rule pureclip:
+rule binding_regions:
     input:
         bam="results/mapped/{sample}/{sample}_R2.bam",
         bai="results/mapped/{sample}/{sample}_R2.bam.bai",
         fasta=resources.fasta,
         common_cl="results/pureclip/common_cl_motifs/fimo_clmotif_occurences_{sample}.bed",
     output:
-        crosslink_sites="results/pureclip/crosslink_sites_{sample}.bed",
-        binding_regions="results/pureclip/binding_regions_{sample}.bed",
+        crosslink_sites="results/pureclip/crosslink_sites/{sample}.bed",
+        binding_regions="results/pureclip/binding_regions/{sample}.bed",
         par="results/pureclip/par_{sample}.txt",
     threads: config["resources"]["pureclip"]["cpu"]
     resources: 
@@ -95,12 +95,14 @@ rule pureclip:
 
 rule annotate_regions: # includes GO analysis on nearest genes
     input:
-        bed="results/pureclip/binding_regions_{sample}.bed",
+        bed="results/pureclip/binding_regions/{sample}.bed",
         homer="resources/homer_genome_installed",
     output:
-        bed="results/homer/binding_regions_{sample}_homer.bed",
-        txt="results/homer/annotated_regions_{sample}.txt",
-        go=directory("results/homer/GO_{sample}"),
+        bed="results/homer/binding_regions_bed/{sample}.bed",
+        txt="results/homer/annotated_regions/{sample}.txt",
+        go=directory("results/homer/GO/{sample}"),
+    params:
+        genome=config["genome"],
     conda:
         "../envs/pureclip.yaml"
     log:
