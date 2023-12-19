@@ -1,6 +1,8 @@
 import os
 import datetime
 from scripts.resources import Resources
+from scripts.barcodes import Barcodes
+
 from scripts import general_functions as utils
 from snakemake.utils import min_version
 
@@ -15,7 +17,7 @@ resources = Resources(config["genome"],
                       config["ensembl_genome_build"])
 
 # load barcode information
-barcodes = utils.Barcodes(config)
+barcodes = Barcodes(config)
 
 # load samples
 SAMPLES = utils.import_samples()
@@ -33,20 +35,19 @@ include: "rules/deduplication.smk"
 include: "rules/bigwig.smk"
 include: "rules/pureclip.smk"
 include: "rules/qc.smk"
-#include: "rules/usable_reads.smk"
+include: "rules/usable_reads.smk"
+include: "rules/motifs.smk"
 
 # set target rule
 rule all:
     input:
         expand("results/bigwig/{sample}.bw", sample=SAMPLES),
-        expand("results/mapped/{sample}/{sample}_sorted.dedup.bam.flagstat", sample=SAMPLES),
-        expand("results/pureclip/crosslink_sites_{sample}.bed", sample=SAMPLES),
-        expand("results/pureclip/binding_regions_{sample}.bed", sample=SAMPLES),
-        expand("results/pureclip/par_{sample}.txt", sample=SAMPLES),
         "results/qc/multiqc_trimmed_reads/multiqc.html",
         "results/qc/multiqc_dedup_flagstat/multiqc.html",
-        expand("results/homer/annotated_regions_{sample}.txt", sample=SAMPLES),
-
+        expand("results/homer/binding_regions_bed/{sample}.bed", sample=SAMPLES),
+        "results/samtools/usable_reads.pdf",
+        expand("results/motifs/{sample}/homerResults.html", sample=SAMPLES),
+        
 # save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 snake_log = f"logs/snakemake/{time}_snakemake.log"
