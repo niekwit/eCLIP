@@ -2,7 +2,6 @@ import os
 import datetime
 from scripts.resources import Resources
 from scripts.barcodes import Barcodes
-
 from scripts import general_functions as utils
 from snakemake.utils import min_version
 
@@ -17,12 +16,14 @@ resources = Resources(config["genome"],
                       config["ensembl_genome_build"])
 
 # load barcode information
-barcodes = Barcodes(config)
+barcodes = Barcodes(config) #under construction
 
 # load samples
-SAMPLES = utils.import_samples()
+SAMPLES = utils.import_samples() # All samples
+IP_SAMPLES,INPUT_SAMPLES = utils.match_samples_with_input() # IP and INPUT samples separately
 
 # load barcode length and set bc-pattern values for umi-tools
+####THIS NEEDS WORK BASED ON LIBRARY STRUCTURE####
 bc_length = config["barcode_length"]
 bc_pattern = "N" * bc_length
 
@@ -37,6 +38,8 @@ include: "rules/pureclip.smk"
 include: "rules/qc.smk"
 include: "rules/usable_reads.smk"
 include: "rules/motifs.smk"
+include: "rules/deeptools.smk"
+include: "rules/annotate_crosslink_sites.smk"
 
 # set target rule
 rule all:
@@ -44,9 +47,11 @@ rule all:
         expand("results/bigwig/{sample}.bw", sample=SAMPLES),
         "results/qc/multiqc_trimmed_reads/multiqc.html",
         "results/qc/multiqc_dedup_flagstat/multiqc.html",
-        expand("results/homer/binding_regions_bed/{sample}.bed", sample=SAMPLES),
         "results/samtools/usable_reads.pdf",
-        expand("results/motifs/{sample}/homerResults.html", sample=SAMPLES),
+        "results/deeptools/correlation.pdf",
+        "results/deeptools/PCA.pdf",
+        expand("results/motifs/{ip_sample}_vs_{input_sample}/homerResults.html", ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
+        expand("results/annotation/{ip_sample}_vs_{input_sample}.ensembl_gene_ids.txt", ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
         
 # save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
