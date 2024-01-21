@@ -7,11 +7,12 @@ LOG=${snakemake_log[0]}
 FASTA=${snakemake_input[fasta]}
 
 findMotifs.pl \
-    $FASTA \
-    fasta \
-    ${snakemake_params[dr]} \
-    -fasta ${snakemake_input[background]} \
-    -rna > $LOG 2>&1
+$FASTA \
+fasta \
+${snakemake_params[dr]} \
+-fasta ${snakemake_input[background]} \
+-rna \
+-p ${snakemake[threads]} > $LOG 2>&1
 
 EXITCODE=$?
 

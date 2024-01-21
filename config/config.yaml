@@ -1,5 +1,7 @@
 genome: hg38
 ensembl_genome_build: "110"
+fdr_cutoff: 0.05 
+fc_cutoff: 0.5 
 barcode_length: 8
 STAR:
   extra: ""
@@ -12,9 +14,6 @@ resources: # computing resources
     time: 60
   fastqc:
     cpu: 4
-    time: 60
-  index:
-    cpu: 36
     time: 60
   star_index:
     cpu: 36

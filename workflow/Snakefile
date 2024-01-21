@@ -40,18 +40,19 @@ include: "rules/usable_reads.smk"
 include: "rules/motifs.smk"
 include: "rules/deeptools.smk"
 include: "rules/annotate_crosslink_sites.smk"
+include: "rules/pathway_analysis.smk"
 
 # set target rule
 rule all:
     input:
-        expand("results/bigwig/{sample}.bw", sample=SAMPLES),
         "results/qc/multiqc_trimmed_reads/multiqc.html",
         "results/qc/multiqc_dedup_flagstat/multiqc.html",
         "results/samtools/usable_reads.pdf",
         "results/deeptools/correlation.pdf",
         "results/deeptools/PCA.pdf",
-        expand("results/motifs/{ip_sample}_vs_{input_sample}/homerResults.html", ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
-        expand("results/annotation/{ip_sample}_vs_{input_sample}.ensembl_gene_ids.txt", ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
+        "results/deeptools/scree.pdf",
+        expand("results/motifs/{ip_sample}_vs_{input_sample}/homerResults.html", zip, ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
+        expand("results/pathway_analysis/{ip_sample}_vs_{input_sample}/", zip, ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
         
 # save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

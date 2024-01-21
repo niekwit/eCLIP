@@ -47,7 +47,7 @@ rule remove_multi_mapping_reads:
     conda:
         "../envs/samtools.yaml"
     shell:
-        "samtools view {params.extra} -h {input} | grep -P '(NH:i:1|^@)' | samtools view -Sb - > {output}"
+        "samtools view {params.extra} -h {input} | grep -w 'NH:i:1' | samtools view -Sb - > {output}"
 
 
 rule sort:
@@ -78,30 +78,22 @@ rule get_readlength:
         "../scripts/get_readlength.sh"
 
 
-rule genome_index:
+rule star_index:
     input:
-        fa=resources.fasta,
+        fasta=resources.fasta,
         gtf=resources.gtf,
         rl="results/qc/readlength.txt",
     output:
-        directory("resources/genome_index/"),
-    threads: config["resources"]["star_index"]["cpu"],
+        temp(directory(f"resources/index_star/")),
+    params:
+        sjdbOverhang="$(cat results/qc/readlength.txt)"
+    threads: config["resources"]["mapping"]["cpu"]
     resources:
-        runtime=config["resources"]["star_index"]["time"],
-    conda:
-        "../envs/mapping.yaml",
+        runtime=config["resources"]["mapping"]["time"]
     log:
-        "logs/genome_index/genome_index.log"
-    shell:
-        "mkdir -p {output} ; "
-        "STAR "
-        "--runThreadN {threads} "
-        "--runMode genomeGenerate "
-        "--genomeDir {output} "
-        "--genomeFastaFiles {input.fa} "
-        "--sjdbGTFfile {input.gtf} "
-        "--sjdbOverhang $(cat {input.rl}) "
-        "> {log} 2>&1"
+        "logs/index/star.log"
+    wrapper:
+        "v3.3.3/bio/star/index"
 
 
 rule mapping:
@@ -110,7 +102,8 @@ rule mapping:
         r2="results/cutadapt2/{sample}_R2_001.fastq.gz",
         idx="resources/genome_index/",
     output:
-        "results/mapped/{sample}/{sample}_Aligned.out.bam",
+        bam="results/mapped/{sample}/{sample}_Aligned.out.bam",
+        log="results/mapped/{sample}/{sample}_Log.final.out",
     params:
         extra=config["STAR"]["extra"]
     threads: config["resources"]["mapping"]["cpu"],
@@ -146,19 +139,35 @@ rule mapping:
         "> {log} 2>&1"
 
 
-rule sort:
+rule remove_multi_mapping_reads:
     input:
         "results/mapped/{sample}/{sample}_Aligned.out.bam",
+    output:
+        "results/mapped/{sample}/{sample}_unique.bam",
+    log:
+        "logs/samtools/remove_multi_mapping_{sample}.log",
+    params:
+        extra="-q 255", # mapq for uniquely mapped reads
+    threads: config["resources"]["samtools"]["cpu"]
+    resources: 
+        runtime=config["resources"]["samtools"]["time"]
+    wrapper:
+        "v3.3.3/bio/samtools/view"
+
+
+rule sort:
+    input:
+        "results/mapped/{sample}/{sample}_unique.bam",
     output:
         "results/mapped/{sample}/{sample}_sorted.bam",
     log:
         "logs/samtools/sort_{sample}.log",
     params:
-        extra="-m 4G", # sort by name to ensure read pairs are adjacent
+        extra="-m 4G",
     threads: config["resources"]["samtools"]["cpu"]
     resources: 
         runtime=config["resources"]["samtools"]["time"]
     wrapper:
-        "v3.1.0/bio/samtools/sort"
+        "v3.3.3/bio/samtools/sort"
 
 

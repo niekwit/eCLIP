@@ -6,12 +6,12 @@ rule get_read2:
     log:
         "logs/samtools/read2_{sample}.log",
     params:
-        extra="-f 130",
+        extra="-f 128", # second in pair flag
     threads: config["resources"]["samtools"]["cpu"]
     resources: 
         runtime=config["resources"]["samtools"]["time"]
     wrapper:
-        "v3.1.0/bio/samtools/view"
+        "v3.3.3/bio/samtools/view"
 
 
 rule index_read2_bam:
@@ -27,7 +27,7 @@ rule index_read2_bam:
     resources: 
         runtime=config["resources"]["samtools"]["time"]
     wrapper:
-        "v3.1.0/bio/samtools/index"
+        "v3.3.3/bio/samtools/index"
 
 
 rule get_common_CL_motifs_files:
@@ -44,39 +44,40 @@ rule get_common_CL_motifs_files:
         ">> {log} 2>&1" # append to same log as other file
 
 
-rule common_CL_motifs:
+rule compute_common_CL_motifs:
     input:
-        bam="results/mapped/{sample}/{sample}_R2.bam",
+        bam="results/mapped/{input_sample}/{input_sample}_sorted.dedup.bam", #pre processed bam file (after deduplication and sorting)
         fasta=resources.fasta,
         txt="resources/motifs.txt",
         xml="resources/motifs.xml",
     output:
-        "results/pureclip/common_cl_motifs/fimo_clmotif_occurences_{sample}.bed",
+        "results/pureclip/common_cl_motifs/fimo_clmotif_occurences_{input_sample}.bed",
     conda:
         "../envs/pureclip.yaml"
     log:
-        "logs/pureclip/common_cl_motifs_{sample}.log"
+        "logs/pureclip/common_cl_motifs_{input_sample}.log"
     script:
         "../scripts/common_CL_motifs.sh"
 
 
-rule binding_regions:
+rule crosslink_detection:
     input:
-        bam="results/mapped/{sample}/{sample}_R2.bam",
-        bai="results/mapped/{sample}/{sample}_R2.bam.bai",
+        bam="results/mapped/{ip_sample}/{ip_sample}_R2.bam",
+        bai="results/mapped/{ip_sample}/{ip_sample}_R2.bam.bai",
+        ibam="results/mapped/{input_sample}/{input_sample}_R2.bam",
+        ibai="results/mapped/{input_sample}/{input_sample}_R2.bam.bai",
         fasta=resources.fasta,
-        common_cl="results/pureclip/common_cl_motifs/fimo_clmotif_occurences_{sample}.bed",
+        common_cl="results/pureclip/common_cl_motifs/fimo_clmotif_occurences_{input_sample}.bed",
     output:
-        crosslink_sites="results/pureclip/crosslink_sites/{sample}.bed",
-        binding_regions="results/pureclip/binding_regions/{sample}.bed",
-        par="results/pureclip/par_{sample}.txt",
+        crosslink_sites="results/pureclip/crosslink_sites/{ip_sample}_vs_{input_sample}.bed",
+        par="results/pureclip/parameters/{ip_sample}_vs_{input_sample}.txt",
     threads: config["resources"]["pureclip"]["cpu"]
     resources: 
         runtime=config["resources"]["pureclip"]["time"]
     conda:
         "../envs/pureclip.yaml"
     log:
-        "logs/pureclip/pureclip_{sample}.log"
+        "logs/pureclip/pureclip_{ip_sample}_vs_{input_sample}.log"
     shell:
         "pureclip "
         "--nt {threads} "
@@ -86,27 +87,10 @@ rule binding_regions:
         "-bai {input.bai} "
         "-g {input.fasta} "
         "-o {output.crosslink_sites} "
-        "--or {output.binding_regions} "
         "--par {output.par} "
         "-nim 4 "
         "-fis {input.common_cl} "
+        "-ibam {input.ibam} "
+        "-ibai {input.ibai} "
         "> {log} 2>&1"
-
-
-rule annotate_regions: # includes GO analysis on nearest genes
-    input:
-        bed="results/pureclip/binding_regions/{sample}.bed",
-        homer="resources/homer_genome_installed",
-    output:
-        bed="results/homer/binding_regions_bed/{sample}.bed",
-        txt="results/homer/annotated_regions/{sample}.txt",
-        go=directory("results/homer/GO/{sample}"),
-    params:
-        genome=config["genome"],
-    conda:
-        "../envs/pureclip.yaml"
-    log:
-        "logs/homer/annotate_regions_{sample}.log"
-    script:
-        "../scripts/annotate_regions.sh"
 

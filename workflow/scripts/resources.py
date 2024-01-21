@@ -3,7 +3,6 @@ import os
 class Resources:
     """Gets URLs and file names of fasta and GTF files for a given genome and build
     """
-    
     # create genome directory
     os.makedirs("resources/", exist_ok=True)
     
@@ -23,34 +22,31 @@ class Resources:
             # create URLs for genome files
             self.fasta_url = f"{base_url_ens}fasta/homo_sapiens/dna/Homo_sapiens.{name}.dna.primary_assembly.fa.gz"
             self.gtf_url = f"{base_url_ens}gtf/homo_sapiens/Homo_sapiens.{name}.{build}.gtf.gz"
-                                  
+            
+            # Genomes for Biomart/Enrichr
+            self.ensembl = "hsapiens_gene_ensembl"
+            self.enrichr = "mouse"
+                              
         elif "mm" in genome:
-            if genome == "mm9":
+            if genome == "mm10":
                 name = "GRCm38"
-            elif genome == "mm10":
+            elif genome == "mm39":
                 name = "GRCm39"
                 
             # create URLs for genome files
             self.fasta_url = f"{base_url_ens}fasta/mus_musculus/dna/Mus_musculus.{name}.dna.primary_assembly.fa.gz"
             self.gtf_url = f"{base_url_ens}gtf/mus_musculus/Mus_musculus.{name}.{build}.gtf.gz"
+            
+            # Genomes for Biomart/Enrichr
+            self.ensembl = "mmusculus_gene_ensembl"
+            self.enrichr = "mouse"
         
-        elif "dm" in genome:
-            ### this is most likely to be a spike-in genome
-            
-            if genome == "dm6":
-                name = "BDGP6.46"
-                
-            # create URLS for genome files
-            self.fasta_url = f"{base_url_ens}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna_sm.toplevel.fa.gz"
-            self.gtf_url = f"{base_url_ens}gtf/drosophila_melanogaster/Drosophila_melanogaster.{name}.{build}.gtf.gz"
-            
-            # create file names to store genome size and star parameter value 
-            self.star_value = f"resources/{name}.genomeSAindexNbases_value.txt"
-            
-
         # downloaded unzipped file names
         self.fasta = self._file_from_url(self.fasta_url)
         self.gtf = self._file_from_url(self.gtf_url)
+        
+        # bed file name for GTF to BED conversion (for crosslink site annotation)
+        self.bed = self.gtf.replace(".gtf", ".bed")
         
     def _file_from_url(self, url):
         """Returns file path for unzipped downloaded file

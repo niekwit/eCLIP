@@ -8,6 +8,8 @@ rule bigwig:
         binSize=config["bigwig"]["binSize"],
         normalise=config["bigwig"]["normalise"],
     threads: config["resources"]["deeptools"]["cpu"]
+    resources:
+        runtime=config["resources"]["deeptools"]["time"]
     log:
         "logs/bigwig/{sample}.log",
     conda:

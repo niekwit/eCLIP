@@ -20,7 +20,7 @@ rule umi_tools: # adds barcode sequence to read name
         "--read2-in={input.r1} "
         "--read2-out={output.r1} "
         "--log2stderr True "
-        "2> {log}"
+        "> {log} 2>&1"
 
 
 

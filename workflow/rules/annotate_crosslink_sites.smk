@@ -22,28 +22,22 @@ rule convert_gtf2bed: #only contains transcript lines
 
 rule annotate_crosslink_sites:
     input:
-        bed="results/pureclip/crosslink_sites/{ip_sample}_vs_{input_sample}.bed",
-        genome_bed=resources.bed,
+        left="results/pureclip/crosslink_sites/{ip_sample}_vs_{input_sample}.bed",
+        right=resources.bed,
     output:
-        bed="results/annotation/{ip_sample}_vs_{input_sample}.annotated_crosslinks.bed",
+        "results/annotation/{ip_sample}_vs_{input_sample}.annotated_crosslinks.bed",
     params:
-        extra=""
+        extra="-wb"
     threads: config["resources"]["deeptools"]["cpu"]
     resources:
         runtime=config["resources"]["deeptools"]["time"]
     log:
         "logs/annotation/{ip_sample}_vs_{input_sample}.log"
-    conda:
-        "../envs/annotation.yaml"
-    shell:
-        "bedtools intersect "
-        "-a {input.bed} "
-        "-b {input.genome_bed} "
-        "-wb "
-        "> {output.bed} 2> {log}"
+    wrapper:
+        "v3.3.3/bio/bedtools/intersect"
 
 
-rule extract_geneIDs:
+rule extract_ensembl_geneIDs:
     input:
         bed="results/annotation/{ip_sample}_vs_{input_sample}.annotated_crosslinks.bed",
     output:

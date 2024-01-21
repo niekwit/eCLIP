@@ -10,9 +10,10 @@ rule fastqc_raw_data:
         "logs/qc/fastqc_raw_data/{sample}{end}.log"
     threads: config["resources"]["fastqc"]["cpu"]
     resources:
+        runtime=config["resources"]["fastqc"]["time"],
         mem_mb = 1024
     wrapper:
-        "v3.1.0/bio/fastqc"
+        "v3.3.3/bio/fastqc"
 
 
 rule multiqc_raw_data:
@@ -50,9 +51,10 @@ rule fastqc_trim_adapters:
         "logs/qc/fastqc1/{sample}_{end}.log"
     threads: config["resources"]["fastqc"]["cpu"]
     resources:
+        runtime=config["resources"]["fastqc"]["time"],
         mem_mb=1024
     wrapper:
-        "v3.1.0/bio/fastqc"
+        "v3.3.3/bio/fastqc"
 
 
 rule fastqc_trim_double_ligation_events:
@@ -67,9 +69,10 @@ rule fastqc_trim_double_ligation_events:
         "logs/qc/fastqc2/{sample}_{end}.log"
     threads: config["resources"]["fastqc"]["cpu"]
     resources:
+        runtime=config["resources"]["fastqc"]["time"],
         mem_mb=1024
     wrapper:
-        "v3.1.0/bio/fastqc"
+        "v3.3.3/bio/fastqc"
 
 
 rule multiqc_trimmed_reads:
@@ -106,7 +109,7 @@ rule samtools_flagstat:
     resources:
         runtime=config["resources"]["samtools"]["time"],
     wrapper:
-        "v3.1.0/bio/samtools/flagstat"
+        "v3.3.3/bio/samtools/flagstat"
 
 
 rule multiqc_dedup_flagstat:
@@ -130,3 +133,5 @@ rule multiqc_dedup_flagstat:
         "{params.extra} "
         "{input} "
         "> {log} 2>&1"
+
+

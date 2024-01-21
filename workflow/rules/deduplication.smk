@@ -11,7 +11,7 @@ rule index_sorted_bam:
     resources: 
         runtime=config["resources"]["samtools"]["time"]
     wrapper:
-        "v3.1.0/bio/samtools/index"
+        "v3.3.3/bio/samtools/index"
 
 
 rule deduplication:
