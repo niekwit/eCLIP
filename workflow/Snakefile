@@ -6,7 +6,7 @@ from scripts import general_functions as utils
 from snakemake.utils import min_version
 
 # set minimum snakemake version
-min_version("6.4.1")
+min_version("8.13.0")
 
 # load config file
 configfile: "config/config.yaml"
@@ -15,46 +15,15 @@ configfile: "config/config.yaml"
 resources = Resources(config["genome"], 
                       config["ensembl_genome_build"])
 
-# load barcode information
-barcodes = Barcodes(config) #under construction
 
-# load samples
-SAMPLES = utils.import_samples() # All samples
-IP_SAMPLES,INPUT_SAMPLES = utils.match_samples_with_input() # IP and INPUT samples separately
 
-# load barcode length and set bc-pattern values for umi-tools
-####THIS NEEDS WORK BASED ON LIBRARY STRUCTURE####
-bc_length = config["barcode_length"]
-bc_pattern = "N" * bc_length
 
-# import rules
-include: "rules/resources.smk"
-include: "rules/umi.smk"
-include: "rules/trim.smk"
-include: "rules/align.smk"
-include: "rules/deduplication.smk"
-include: "rules/bigwig.smk"
-include: "rules/pureclip.smk"
-include: "rules/qc.smk"
-include: "rules/usable_reads.smk"
-include: "rules/motifs.smk"
-include: "rules/deeptools.smk"
-include: "rules/annotate_crosslink_sites.smk"
-include: "rules/pathway_analysis.smk"
 
-# set target rule
-rule all:
-    input:
-        "results/qc/multiqc_trimmed_reads/multiqc.html",
-        "results/qc/multiqc_dedup_flagstat/multiqc.html",
-        "results/samtools/usable_reads.pdf",
-        "results/deeptools/correlation.pdf",
-        "results/deeptools/PCA.pdf",
-        "results/deeptools/scree.pdf",
-        expand("results/motifs/{ip_sample}_vs_{input_sample}/homerResults.html", zip, ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
-        expand("results/pathway_analysis/{ip_sample}_vs_{input_sample}/", zip, ip_sample=IP_SAMPLES, input_sample=INPUT_SAMPLES),
+
+
+
         
-# save snakemake terminal output to log file
+# Save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 snake_log = f"logs/snakemake/{time}_snakemake.log"
 os.makedirs("logs/snakemake", exist_ok=True)
@@ -64,5 +33,5 @@ onsuccess:
     print("Analysis finished successfully!")
 onerror:
     shell("cp -v {log} {snake_log}")
-    print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
+    print(f"Analysis failed...")
 
