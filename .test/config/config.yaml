@@ -15,7 +15,7 @@ star:
 umi_tools:
   dedup_stats: True # Write umi_tools dedup stats (requires a lot of memory)
 clipper:
-  extra: "" # Extra parameters for CLIPper
+  extra: "--gene ENSG00000154639 --gene ENSG00000154640 --gene ENSG00000154642 --gene ENSG00000154645 --gene ENSG00000154646 --gene ENSG00000155304 --gene ENSG00000155307 --gene ENSG00000155313 --gene ENSG00000166351 --gene ENSG00000180530 --gene ENSG00000185272 --gene ENSG00000188992 --gene ENSG00000273590 --gene ENSG00000274276 --gene ENSG00000274391 --gene ENSG00000274559 --gene ENSG00000275464 --gene ENSG00000275895 --gene ENSG00000275993 --gene ENSG00000276076 --gene ENSG00000276289 --gene ENSG00000276612 --gene ENSG00000277117 --gene ENSG00000277277 --gene ENSG00000278961 --gene ENSG00000279493 --gene ENSG00000280071 --gene ENSG00000280433"  # Extra parameters for CLIPper
 peaks:
   l10p: 3 # -log10(p-value) cutoff for significant peaks (narrowPeak score and total entropy)
   l2fc: 3 # log2 fold change (over size-matched input) cutoff for significant peaks

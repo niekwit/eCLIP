@@ -1,0 +1,8 @@
+# Only the test genome files are tracked, all other files in resources are generated
+resources/*
+!resources/GRCh38.primary_assembly.genome.fa
+!resources/gencode.v29.annotation.gtf
+!resources/ENCFF269URO.bed
+report.zip
+.downloads/
+clipper_genes.txt

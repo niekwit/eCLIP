@@ -1,0 +1,235 @@
+$schema: http://json-schema.org/draft-06/schema#
+description: Snakemake configuration file
+type: object
+properties:
+  genome:
+    type: string
+    enum:
+    - hg38
+    - hg19
+    - mm10
+    description: Genome (GENCODE)
+  umi:
+    type: object
+    properties:
+      se_length:
+        type: integer
+        minimum: 1
+        description: UMI length of single-end eCLIP
+      pe_length:
+        type: integer
+        minimum: 1
+        description: UMI length of paired-end eCLIP
+    required:
+    - se_length
+    - pe_length
+  cutadapt:
+    type: object
+    properties:
+      se_adapter:
+        type: string
+        enum:
+        - InvRil19
+        - InvRNA1
+        - InvRNA2
+        - InvRNA3
+        - InvRNA4
+        - InvRNA5
+        - InvRNA6
+        - InvRNA7
+        - InvRNA8
+      error_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+      quality_cutoff:
+        type: integer
+        minimum: 0
+      min_length:
+        type: integer
+        minimum: 1
+    required:
+    - se_adapter
+    - error_rate
+    - quality_cutoff
+    - min_length
+  star:
+    type: object
+    properties:
+      repeats_extra:
+        type: string
+      genome_extra:
+        type: string
+    required:
+    - repeats_extra
+    - genome_extra
+  umi_tools:
+    type: object
+    properties:
+      dedup_stats:
+        type: boolean
+    required:
+    - dedup_stats
+  clipper:
+    type: object
+    properties:
+      extra:
+        type: string
+    required:
+    - extra
+  peaks:
+    type: object
+    properties:
+      l10p:
+        type: number
+        minimum: 0
+        description: -log10(p-value) cutoff
+      l2fc:
+        type: number
+        description: log2 fold change cutoff
+    required:
+    - l10p
+    - l2fc
+  resources:
+    type: object
+    properties:
+      trim:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      fastqc:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      star_index:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      mapping:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      samtools:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      umi_tools:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      bigwig:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      clipper:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      peaks:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+      idr:
+        type: object
+        properties:
+          cpu:
+            type: integer
+            minimum: 1
+          time:
+            type: integer
+            minimum: 10
+        required:
+        - cpu
+        - time
+    required:
+    - trim
+    - fastqc
+    - star_index
+    - mapping
+    - samtools
+    - umi_tools
+    - bigwig
+    - clipper
+    - peaks
+    - idr
+required:
+- genome
+- umi
+- cutadapt
+- star
+- umi_tools
+- clipper
+- peaks
+- resources

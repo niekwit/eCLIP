@@ -1,0 +1,10 @@
+name: idr
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # ENCODE used IDR 2.0.2 (not installable anymore, requires Python 3.5)
+  - idr=2.0.4.2
+  - python=3.10
+  - numpy<1.24

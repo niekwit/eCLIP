@@ -1,0 +1,10 @@
+name: bigwig
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bedtools=2.31.1
+  - samtools=1.21
+  - gawk=5.3.1
+  - ucsc-bedgraphtobigwig=482

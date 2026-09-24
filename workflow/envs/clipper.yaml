@@ -1,0 +1,22 @@
+name: clipper
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # CLIPper itself is installed by clipper.post-deploy.sh
+  - python=3.7
+  - pip
+  - git
+  - cxx-compiler
+  - cython=0.29
+  - numpy=1.21
+  - scipy=1.5
+  - pandas=1.0
+  - scikit-learn=0.23
+  - matplotlib-base=3.2
+  - pysam=0.15
+  - pybedtools=0.8.1
+  - htseq=0.11
+  - bedtools=2.29
+  - samtools=1.9

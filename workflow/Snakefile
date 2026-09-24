@@ -1,37 +1,84 @@
-import os
-import datetime
-from scripts.resources import Resources
-from scripts.barcodes import Barcodes
-from scripts import general_functions as utils
-from snakemake.utils import min_version
+"""
+eCLIP analysis workflow based on the ENCODE eCLIP pipeline (eCLIP-seq Processing Pipeline v2.2)
+https://www.encodeproject.org/pipelines/ENCPL357ADL/
+"""
 
-# set minimum snakemake version
-min_version("8.13.0")
 
-# load config file
+include: "scripts/general_functions.smk"
+
+
+# Set minimum snakemake version
+min_version("8.25.5")
+
+# Wrapper version
+wrapper_version = "v7.0.0"
+
+
+# Load config file and genome
 configfile: "config/config.yaml"
 
-# load genome resources
-resources = Resources(config["genome"], 
-                      config["ensembl_genome_build"])
+
+validate(config, "schemas/config.schema.yaml")
+
+# Load and validate samples.csv
+csv = pd.read_csv("config/samples.csv", dtype=str).fillna("")
+validate(csv, "schemas/samples.schema.yaml")
+
+# Load genome resources
+genome = config["genome"]
+resources = GenomeResources(genome)
+
+# Get wildcard values
+PAIRED_END = paired_end()
+ENDS = [1, 2] if PAIRED_END else [1]
+IP_SAMPLES, INPUT_SAMPLES, SAMPLES = samples(PAIRED_END)
+UNITS = units()
+IDR_PAIRS = idr_pairs()
 
 
+wildcard_constraints:
+    sample="[A-Za-z0-9_]+",
+    s1="[A-Za-z0-9_]+",
+    s2="[A-Za-z0-9_]+",
+    unit="[A-Za-z0-9_.]+",
+    barcode="[A-Za-z0-9]+",
+    end="[12]",
+    round="[12]",
 
 
+# import rules
+include: "rules/resources.smk"
+include: "rules/qc.smk"
+include: "rules/trimming.smk"
+include: "rules/repeats.smk"
+include: "rules/mapping.smk"
+include: "rules/bigwig.smk"
+include: "rules/peaks.smk"
+include: "rules/idr.smk"
 
 
+# Set target rule
+rule all:
+    input:
+        targets(),
 
 
-        
+# Set local rules
+localrules:
+    all,
+
+
 # Save snakemake terminal output to log file
 time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 snake_log = f"logs/snakemake/{time}_snakemake.log"
 os.makedirs("logs/snakemake", exist_ok=True)
 
-onsuccess: 
+
+onsuccess:
     shell("cp -v {log} {snake_log}")
     print("Analysis finished successfully!")
+
+
 onerror:
     shell("cp -v {log} {snake_log}")
-    print(f"Analysis failed...")
-
+    print(f"Analysis (partly) failed...\nCheck {snake_log} for details")
