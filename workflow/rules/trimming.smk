@@ -10,6 +10,13 @@ if PAIRED_END:
         output:
             dir=temp(directory("results/demux/{sample}")),
             metrics="results/qc/demux/{sample}.metrics",
+        log:
+            "logs/demux/{sample}.log",
+        conda:
+            "../envs/yeolab_py2.yaml"
+        threads: 1
+        resources:
+            runtime=config["resources"]["trim"]["time"],
         params:
             barcode_a=lambda wildcards: csv.loc[
                 csv["sample"] == wildcards.sample, "barcode_a"
@@ -18,13 +25,6 @@ if PAIRED_END:
                 csv["sample"] == wildcards.sample, "barcode_b"
             ].iloc[0],
             length=config["umi"]["pe_length"],
-        threads: 1
-        resources:
-            runtime=config["resources"]["trim"]["time"],
-        log:
-            "logs/demux/{sample}.log",
-        conda:
-            "../envs/yeolab_py2.yaml"
         shell:
             # eclipdemux writes its output files to the working directory
             "R1=$(realpath {input.r1}); "
@@ -52,6 +52,13 @@ if PAIRED_END:
             r1=temp("results/trimmed/round1/{sample}.{barcode}.r1.fq.gz"),
             r2=temp("results/trimmed/round1/{sample}.{barcode}.r2.fq.gz"),
             qc="results/qc/cutadapt/round1/{sample}.{barcode}.txt",
+        log:
+            "logs/cutadapt/{sample}.{barcode}.round1.log",
+        conda:
+            "../envs/trimming.yaml"
+        threads: config["resources"]["trim"]["cpu"]
+        resources:
+            runtime=config["resources"]["trim"]["time"],
         params:
             adapters=lambda wildcards: cutadapt_args(
                 f"{wildcards.sample}.{wildcards.barcode}", 1
@@ -59,13 +66,6 @@ if PAIRED_END:
             error_rate=config["cutadapt"]["error_rate"],
             quality_cutoff=config["cutadapt"]["quality_cutoff"],
             min_length=config["cutadapt"]["min_length"],
-        threads: config["resources"]["trim"]["cpu"]
-        resources:
-            runtime=config["resources"]["trim"]["time"],
-        log:
-            "logs/cutadapt/{sample}.{barcode}.round1.log",
-        conda:
-            "../envs/trimming.yaml"
         shell:
             "cutadapt "
             "--match-read-wildcards "
@@ -90,6 +90,13 @@ if PAIRED_END:
             r1=temp("results/trimmed/round2/{sample}.{barcode}.r1.fq.gz"),
             r2=temp("results/trimmed/round2/{sample}.{barcode}.r2.fq.gz"),
             qc="results/qc/cutadapt/round2/{sample}.{barcode}.txt",
+        log:
+            "logs/cutadapt/{sample}.{barcode}.round2.log",
+        conda:
+            "../envs/trimming.yaml"
+        threads: config["resources"]["trim"]["cpu"]
+        resources:
+            runtime=config["resources"]["trim"]["time"],
         params:
             adapters=lambda wildcards: cutadapt_args(
                 f"{wildcards.sample}.{wildcards.barcode}", 2
@@ -97,13 +104,6 @@ if PAIRED_END:
             error_rate=config["cutadapt"]["error_rate"],
             quality_cutoff=config["cutadapt"]["quality_cutoff"],
             min_length=config["cutadapt"]["min_length"],
-        threads: config["resources"]["trim"]["cpu"]
-        resources:
-            runtime=config["resources"]["trim"]["time"],
-        log:
-            "logs/cutadapt/{sample}.{barcode}.round2.log",
-        conda:
-            "../envs/trimming.yaml"
         shell:
             "cutadapt "
             "--match-read-wildcards "
@@ -127,15 +127,15 @@ else:
             "reads/{unit}.fastq.gz",
         output:
             temp("results/umi/{unit}.r1.fq.gz"),
-        params:
-            pattern=lambda wildcards: "N" * config["umi"]["se_length"],
-        threads: 1
-        resources:
-            runtime=config["resources"]["umi_tools"]["time"],
         log:
             "logs/umi_tools/extract/{unit}.log",
         conda:
             "../envs/umi_tools.yaml"
+        threads: 1
+        resources:
+            runtime=config["resources"]["umi_tools"]["time"],
+        params:
+            pattern=lambda wildcards: "N" * config["umi"]["se_length"],
         shell:
             "umi_tools extract "
             "--random-seed 1 "
@@ -150,18 +150,18 @@ else:
         output:
             fastq=temp("results/trimmed/round1/{unit}.r1.fq.gz"),
             qc="results/qc/cutadapt/round1/{unit}.txt",
+        log:
+            "logs/cutadapt/{unit}.round1.log",
+        conda:
+            "../envs/trimming.yaml"
+        threads: config["resources"]["trim"]["cpu"]
+        resources:
+            runtime=config["resources"]["trim"]["time"],
         params:
             adapters=lambda wildcards: cutadapt_args(wildcards.unit, 1),
             error_rate=config["cutadapt"]["error_rate"],
             quality_cutoff=config["cutadapt"]["quality_cutoff"],
             min_length=config["cutadapt"]["min_length"],
-        threads: config["resources"]["trim"]["cpu"]
-        resources:
-            runtime=config["resources"]["trim"]["time"],
-        log:
-            "logs/cutadapt/{unit}.round1.log",
-        conda:
-            "../envs/trimming.yaml"
         shell:
             "cutadapt "
             "--match-read-wildcards "
@@ -182,18 +182,18 @@ else:
         output:
             fastq=temp("results/trimmed/round2/{unit}.r1.fq.gz"),
             qc="results/qc/cutadapt/round2/{unit}.txt",
+        log:
+            "logs/cutadapt/{unit}.round2.log",
+        conda:
+            "../envs/trimming.yaml"
+        threads: config["resources"]["trim"]["cpu"]
+        resources:
+            runtime=config["resources"]["trim"]["time"],
         params:
             adapters=lambda wildcards: cutadapt_args(wildcards.unit, 2),
             error_rate=config["cutadapt"]["error_rate"],
             quality_cutoff=config["cutadapt"]["quality_cutoff"],
             min_length=config["cutadapt"]["min_length"],
-        threads: config["resources"]["trim"]["cpu"]
-        resources:
-            runtime=config["resources"]["trim"]["time"],
-        log:
-            "logs/cutadapt/{unit}.round2.log",
-        conda:
-            "../envs/trimming.yaml"
         shell:
             "cutadapt "
             "--match-read-wildcards "

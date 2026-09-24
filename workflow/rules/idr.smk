@@ -9,13 +9,13 @@ rule compress_peaks_full:
     output:
         bed="results/idr/entropy/{sample}.compressed.bed",
         full="results/idr/entropy/{sample}.compressed.bed.full",
-    threads: 1
-    resources:
-        runtime=config["resources"]["idr"]["time"],
     log:
         "logs/idr/compress_peaks/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=config["resources"]["idr"]["time"],
     shell:
         "perl {input.script} {input.full} {output.bed} {output.full} > {log} 2>&1"
 
@@ -28,14 +28,14 @@ rule information_content:
     output:
         entropy="results/idr/entropy/{sample}.entropy.full",
         excess_reads="results/idr/entropy/{sample}.entropy.excess_reads",
-    threads: 1
-    resources:
-        runtime=config["resources"]["idr"]["time"],
-        mem_mb=16000,
     log:
         "logs/idr/information_content/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=config["resources"]["idr"]["time"],
+        mem_mb=16000,
     shell:
         "perl {input.script} "
         "{input.full} "
@@ -52,13 +52,13 @@ rule entropy_bed:
         script=yeolab_script("full_to_bed.py"),
     output:
         "results/idr/entropy/{sample}.entropy.bed",
-    threads: 1
-    resources:
-        runtime=15,
     log:
         "logs/idr/entropy_bed/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=15,
     shell:
         # Columns 7-10 are added because IDR >= 2.0.3 expects narrowPeak-like BED files
         # (ranking is done on column 5: entropy)
@@ -74,13 +74,13 @@ rule idr:
     output:
         idr="results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.idr.out",
         plot="results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.idr.out.png",
-    threads: 1
-    resources:
-        runtime=config["resources"]["idr"]["time"],
     log:
         "logs/idr/idr/{s1}_vs_{s2}.log",
     conda:
         "../envs/idr.yaml"
+    threads: 1
+    resources:
+        runtime=config["resources"]["idr"]["time"],
     shell:
         "idr "
         "--samples {input.rep1} {input.rep2} "
@@ -100,13 +100,13 @@ rule parse_idr_peaks:
         script=yeolab_script("parse_idr_peaks.pl"),
     output:
         "results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.idr.out.bed",
-    threads: 1
-    resources:
-        runtime=config["resources"]["idr"]["time"],
     log:
         "logs/idr/parse_idr_peaks/{s1}_vs_{s2}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=config["resources"]["idr"]["time"],
     shell:
         "perl {input.script} "
         "{input.idr} "
@@ -125,14 +125,14 @@ rule input_normalisation_idr:
     output:
         bed="results/idr/{s1}_vs_{s2}/{sample}.idr_peaks.normed.bed",
         full="results/idr/{s1}_vs_{s2}/{sample}.idr_peaks.normed.bed.full",
-    threads: config["resources"]["idr"]["cpu"]
-    resources:
-        runtime=config["resources"]["peaks"]["time"],
-        mem_mb=16000,
     log:
         "logs/idr/input_normalisation/{s1}_vs_{s2}/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: config["resources"]["idr"]["cpu"]
+    resources:
+        runtime=config["resources"]["peaks"]["time"],
+        mem_mb=16000,
     shell:
         "perl {input.script} "
         "{input.ip_bam} "
@@ -153,17 +153,19 @@ rule reproducible_peaks:
         idr="results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.idr.out",
         script=yeolab_script("get_reproducing_peaks.pl"),
     output:
-        bed=temp("results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.reproducible_peaks.unsorted.bed"),
+        bed=temp(
+            "results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.reproducible_peaks.unsorted.bed"
+        ),
         custombed="results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.reproducible_peaks.custombed",
         rep1_full="results/idr/{s1}_vs_{s2}/{s1}.reproducible_peaks.full",
         rep2_full="results/idr/{s1}_vs_{s2}/{s2}.reproducible_peaks.full",
-    threads: 1
-    resources:
-        runtime=config["resources"]["idr"]["time"],
     log:
         "logs/idr/reproducible_peaks/{s1}_vs_{s2}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=config["resources"]["idr"]["time"],
     shell:
         "perl {input.script} "
         "{input.rep1} "
@@ -183,12 +185,12 @@ rule sort_reproducible_peaks:
         "results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.reproducible_peaks.unsorted.bed",
     output:
         "results/idr/{s1}_vs_{s2}/{s1}_vs_{s2}.reproducible_peaks.bed",
-    threads: 1
-    resources:
-        runtime=15,
     log:
         "logs/idr/sort_reproducible_peaks/{s1}_vs_{s2}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=15,
     shell:
         "sort -k1,1 -k2,2n {input} > {output} 2> {log}"

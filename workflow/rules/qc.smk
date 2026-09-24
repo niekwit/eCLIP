@@ -6,14 +6,14 @@ if PAIRED_END:
         output:
             html="results/qc/fastqc/raw/{sample}_R{end}.html",
             zip="results/qc/fastqc/raw/{sample}_R{end}_fastqc.zip",
-        params:
-            extra="--quiet",
         log:
             "logs/fastqc/raw/{sample}_R{end}.log",
         threads: config["resources"]["fastqc"]["cpu"]
         resources:
             runtime=config["resources"]["fastqc"]["time"],
             mem_mb=2048,
+        params:
+            extra="--quiet",
         wrapper:
             f"{wrapper_version}/bio/fastqc"
 
@@ -25,14 +25,14 @@ else:
         output:
             html="results/qc/fastqc/raw/{sample}.html",
             zip="results/qc/fastqc/raw/{sample}_fastqc.zip",
-        params:
-            extra="--quiet",
         log:
             "logs/fastqc/raw/{sample}.log",
         threads: config["resources"]["fastqc"]["cpu"]
         resources:
             runtime=config["resources"]["fastqc"]["time"],
             mem_mb=2048,
+        params:
+            extra="--quiet",
         wrapper:
             f"{wrapper_version}/bio/fastqc"
 
@@ -44,14 +44,14 @@ rule fastqc_trimmed:
     output:
         html="results/qc/fastqc/trim{round}/{unit}.r{end}.html",
         zip="results/qc/fastqc/trim{round}/{unit}.r{end}_fastqc.zip",
-    params:
-        extra="--quiet",
     log:
         "logs/fastqc/trim{round}/{unit}.r{end}.log",
     threads: config["resources"]["fastqc"]["cpu"]
     resources:
         runtime=config["resources"]["fastqc"]["time"],
         mem_mb=2048,
+    params:
+        extra="--quiet",
     wrapper:
         f"{wrapper_version}/bio/fastqc"
 
@@ -65,18 +65,18 @@ rule multiqc:
             caption="../report/multiqc.rst",
             category="MultiQC",
         ),
-    params:
-        dir=lambda wildcards, output: os.path.dirname(output[0]),
-        # Sample names are prefixed with their directory (raw/trim1/trim2, round1/round2, repeats/genome)
-        extra="--dirs --dirs-depth 1",
-    threads: config["resources"]["fastqc"]["cpu"]
-    resources:
-        runtime=config["resources"]["fastqc"]["time"],
-        mem_mb=2048,
     log:
         "logs/multiqc/multiqc.log",
     conda:
         "../envs/mapping.yaml"
+    threads: config["resources"]["fastqc"]["cpu"]
+    resources:
+        runtime=config["resources"]["fastqc"]["time"],
+        mem_mb=2048,
+    params:
+        dir=lambda wildcards, output: os.path.dirname(output[0]),
+        # Sample names are prefixed with their directory (raw/trim1/trim2, round1/round2, repeats/genome)
+        extra="--dirs --dirs-depth 1",
     shell:
         "multiqc "
         "--force "

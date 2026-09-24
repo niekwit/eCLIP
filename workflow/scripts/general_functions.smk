@@ -74,9 +74,7 @@ def samples(PAIRED_END):
         )
     wrong = [x for x in ALL if "_vs_" in x]
     if len(wrong) != 0:
-        raise ValueError(
-            "Sample names can not contain _vs_:\n" + "\n".join(wrong)
-        )
+        raise ValueError("Sample names can not contain _vs_:\n" + "\n".join(wrong))
 
     # All input samples must have their own row without a control
     missing = [x for x in INPUT if x not in ALL]
@@ -116,7 +114,9 @@ def samples(PAIRED_END):
     if PAIRED_END:
         for col in ["barcode_a", "barcode_b"]:
             if col not in csv.columns:
-                raise ValueError(f"Paired-end reads require column {col} in samples.csv")
+                raise ValueError(
+                    f"Paired-end reads require column {col} in samples.csv"
+                )
         wrong = csv.loc[
             (csv["barcode_a"] == "") | (csv["barcode_b"] == ""), "sample"
         ].tolist()
@@ -298,7 +298,11 @@ def targets():
 
     # Bigwig files of all libraries (IP and input)
     TARGETS.extend(
-        expand("results/bigwig/{sample}.norm.{strand}.bw", sample=SAMPLES, strand=["pos", "neg"])
+        expand(
+            "results/bigwig/{sample}.norm.{strand}.bw",
+            sample=SAMPLES,
+            strand=["pos", "neg"],
+        )
     )
 
     # Input normalised peaks of each IP sample

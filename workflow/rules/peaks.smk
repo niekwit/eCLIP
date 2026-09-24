@@ -6,16 +6,16 @@ rule clipper:
         bai="results/mapped/{sample}.bam.bai",
     output:
         "results/clipper/{sample}.peakClusters.bed",
-    params:
-        species=resources.clipper_species,
-        extra=config["clipper"]["extra"],
-    threads: config["resources"]["clipper"]["cpu"]
-    resources:
-        runtime=config["resources"]["clipper"]["time"],
     log:
         "logs/clipper/{sample}.log",
     conda:
         "../envs/clipper.yaml"
+    threads: config["resources"]["clipper"]["cpu"]
+    resources:
+        runtime=config["resources"]["clipper"]["time"],
+    params:
+        species=resources.clipper_species,
+        extra=config["clipper"]["extra"],
     shell:
         "clipper "
         "--species {params.species} "
@@ -34,14 +34,14 @@ rule input_normalisation:
     output:
         bed="results/peaks/{sample}/{sample}.normed.bed",
         full="results/peaks/{sample}/{sample}.normed.bed.full",
-    threads: config["resources"]["peaks"]["cpu"]
-    resources:
-        runtime=config["resources"]["peaks"]["time"],
-        mem_mb=16000,
     log:
         "logs/input_normalisation/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: config["resources"]["peaks"]["cpu"]
+    resources:
+        runtime=config["resources"]["peaks"]["time"],
+        mem_mb=16000,
     shell:
         "perl {input.script} "
         "{input.ip_bam} "
@@ -61,13 +61,13 @@ rule compress_peaks:
         ),
     output:
         "results/peaks/{sample}/{sample}.normed.compressed.bed",
-    threads: 1
-    resources:
-        runtime=config["resources"]["peaks"]["time"],
     log:
         "logs/compress_peaks/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=config["resources"]["peaks"]["time"],
     shell:
         "perl {input.script} {input.bed} {output} > {log} 2>&1"
 
@@ -77,15 +77,15 @@ rule sort_peaks:
         "results/{prefix}.bed",
     output:
         temp("results/{prefix}.sorted.bed"),
+    log:
+        "logs/sort_peaks/{prefix}.log",
     wildcard_constraints:
         prefix=".+compressed",
+    conda:
+        "../envs/peaks.yaml"
     threads: 1
     resources:
         runtime=15,
-    log:
-        "logs/sort_peaks/{prefix}.log",
-    conda:
-        "../envs/peaks.yaml"
     shell:
         "sort -k1,1 -k2,2n {input} > {output} 2> {log}"
 
@@ -96,16 +96,16 @@ rule remove_blacklisted_regions:
         blacklist=resources.blacklist,
     output:
         "results/peaks/{sample}/{sample}.peaks.bed",
-    params:
-        # ENCODE removes peaks on the same strand as the (BED6) eCLIP blacklist regions
-        strand="-s" if resources.blacklist_stranded else "",
-    threads: 1
-    resources:
-        runtime=15,
     log:
         "logs/blacklist/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=15,
+    params:
+        # ENCODE removes peaks on the same strand as the (BED6) eCLIP blacklist regions
+        strand="-s" if resources.blacklist_stranded else "",
     shell:
         "bedtools intersect -v {params.strand} -a {input.bed} -b {input.blacklist} > {output} 2> {log}"
 
@@ -117,19 +117,19 @@ rule narrowpeak:
     output:
         narrowpeak="results/{prefix}.narrowPeak",
         fixed=temp("results/{prefix}.fixed.bed"),
+    log:
+        "logs/narrowpeak/{prefix}.log",
+    wildcard_constraints:
+        prefix=".+peaks",
+    conda:
+        "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=15,
     params:
         db=genome,
         l10p=config["peaks"]["l10p"],
         l2fc=config["peaks"]["l2fc"],
-    wildcard_constraints:
-        prefix=".+peaks",
-    threads: 1
-    resources:
-        runtime=15,
-    log:
-        "logs/narrowpeak/{prefix}.log",
-    conda:
-        "../envs/peaks.yaml"
     script:
         "../scripts/peak_files.py"
 
@@ -140,15 +140,15 @@ rule bigbed:
         cs=resources.chrom_sizes,
     output:
         "results/{prefix}.bb",
+    log:
+        "logs/bigbed/{prefix}.log",
     wildcard_constraints:
         prefix=".+peaks",
+    conda:
+        "../envs/peaks.yaml"
     threads: 1
     resources:
         runtime=15,
-    log:
-        "logs/bigbed/{prefix}.log",
-    conda:
-        "../envs/peaks.yaml"
     shell:
         "bedToBigBed {input.bed} {input.cs} {output} > {log} 2>&1"
 
@@ -159,15 +159,15 @@ rule total_entropy:
         full="results/peaks/{sample}/{sample}.normed.bed.full",
     output:
         "results/peaks/{sample}/{sample}.total_entropy.txt",
-    params:
-        l10p=config["peaks"]["l10p"],
-        l2fc=config["peaks"]["l2fc"],
-    threads: 1
-    resources:
-        runtime=15,
     log:
         "logs/total_entropy/{sample}.log",
     conda:
         "../envs/peaks.yaml"
+    threads: 1
+    resources:
+        runtime=15,
+    params:
+        l10p=config["peaks"]["l10p"],
+        l2fc=config["peaks"]["l2fc"],
     script:
         "../scripts/total_entropy.py"

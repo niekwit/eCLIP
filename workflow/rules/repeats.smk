@@ -4,13 +4,13 @@ rule sort_trimmed_fastq:
         "results/trimmed/round2/{unit}.r{end}.fq.gz",
     output:
         temp("results/trimmed/sorted/{unit}.r{end}.fq.gz"),
-    threads: config["resources"]["samtools"]["cpu"]
-    resources:
-        runtime=config["resources"]["samtools"]["time"],
     log:
         "logs/fastq_sort/trimmed/{unit}.r{end}.log",
     conda:
         "../envs/mapping.yaml"
+    threads: config["resources"]["samtools"]["cpu"]
+    resources:
+        runtime=config["resources"]["samtools"]["time"],
     shell:
         "pigz -dc {input} | "
         "fastq-sort --id 2> {log} | "
@@ -31,17 +31,17 @@ rule star_repeats:
         unmapped=temp(
             expand("results/star/repeats/{{unit}}.Unmapped.out.mate{end}", end=ENDS)
         ),
-    params:
-        prefix="results/star/repeats/{unit}.",
-        extra=config["star"]["repeats_extra"],
-    threads: config["resources"]["mapping"]["cpu"]
-    resources:
-        runtime=config["resources"]["mapping"]["time"],
-        mem_mb=32000,
     log:
         "logs/star/repeats/{unit}.log",
     conda:
         "../envs/mapping.yaml"
+    threads: config["resources"]["mapping"]["cpu"]
+    resources:
+        runtime=config["resources"]["mapping"]["time"],
+        mem_mb=32000,
+    params:
+        prefix="results/star/repeats/{unit}.",
+        extra=config["star"]["repeats_extra"],
     shell:
         "STAR "
         "--runMode alignReads "
@@ -74,13 +74,12 @@ rule sort_unmapped_fastq:
         "results/star/repeats/{unit}.Unmapped.out.mate{end}",
     output:
         temp("results/repeats/unmapped/{unit}.r{end}.fq.gz"),
-    threads: config["resources"]["samtools"]["cpu"]
-    resources:
-        runtime=config["resources"]["samtools"]["time"],
     log:
         "logs/fastq_sort/unmapped/{unit}.r{end}.log",
     conda:
         "../envs/mapping.yaml"
+    threads: config["resources"]["samtools"]["cpu"]
+    resources:
+        runtime=config["resources"]["samtools"]["time"],
     shell:
-        "fastq-sort --id {input} 2> {log} | "
-        "pigz -p {threads} > {output}"
+        "fastq-sort --id {input} 2> {log} | " "pigz -p {threads} > {output}"

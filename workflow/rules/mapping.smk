@@ -10,17 +10,17 @@ rule star_genome:
         unmapped=temp(
             expand("results/star/genome/{{unit}}.Unmapped.out.mate{end}", end=ENDS)
         ),
-    params:
-        prefix="results/star/genome/{unit}.",
-        extra=config["star"]["genome_extra"],
-    threads: config["resources"]["mapping"]["cpu"]
-    resources:
-        runtime=config["resources"]["mapping"]["time"],
-        mem_mb=40000,
     log:
         "logs/star/genome/{unit}.log",
     conda:
         "../envs/mapping.yaml"
+    threads: config["resources"]["mapping"]["cpu"]
+    resources:
+        runtime=config["resources"]["mapping"]["time"],
+        mem_mb=40000,
+    params:
+        prefix="results/star/genome/{unit}.",
+        extra=config["star"]["genome_extra"],
     shell:
         "STAR "
         "--runMode alignReads "
@@ -55,13 +55,13 @@ if PAIRED_END:
             "results/star/genome/{unit}.Aligned.out.bam",
         output:
             temp("results/mapped/genome/{unit}.namesorted.bam"),
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
         log:
             "logs/samtools_sort/namesort/{unit}.log",
         conda:
             "../envs/mapping.yaml"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources:
+            runtime=config["resources"]["samtools"]["time"],
         shell:
             "samtools sort -n -@ {threads} -o {output} {input} 2> {log}"
 
@@ -73,14 +73,14 @@ if PAIRED_END:
         output:
             bam=temp("results/mapped/genome/{unit}.rmdup.bam"),
             metrics="results/qc/barcode_collapse/{unit}.metrics",
-        threads: 1
-        resources:
-            runtime=config["resources"]["umi_tools"]["time"],
-            mem_mb=32000,
         log:
             "logs/barcode_collapse/{unit}.log",
         conda:
             "../envs/yeolab_py2.yaml"
+        threads: 1
+        resources:
+            runtime=config["resources"]["umi_tools"]["time"],
+            mem_mb=32000,
         shell:
             "python {input.script} "
             "-b {input.bam} "
@@ -93,13 +93,13 @@ if PAIRED_END:
             "results/mapped/genome/{unit}.rmdup.bam",
         output:
             temp("results/mapped/genome/{unit}.rmdup.sorted.bam"),
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
         log:
             "logs/samtools_sort/rmdup/{unit}.log",
         conda:
             "../envs/mapping.yaml"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources:
+            runtime=config["resources"]["samtools"]["time"],
         shell:
             "samtools sort -@ {threads} -o {output} {input} 2> {log}"
 
@@ -108,17 +108,20 @@ if PAIRED_END:
         input:
             lambda wildcards: expand(
                 "results/mapped/genome/{unit}.rmdup.sorted.bam",
-                unit=[f"{wildcards.sample}.{x}" for x in sample_barcodes(wildcards.sample)],
+                unit=[
+                    f"{wildcards.sample}.{x}"
+                    for x in sample_barcodes(wildcards.sample)
+                ],
             ),
         output:
             temp("results/mapped/merged/{sample}.bam"),
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
         log:
             "logs/samtools_merge/{sample}.log",
         conda:
             "../envs/mapping.yaml"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources:
+            runtime=config["resources"]["samtools"]["time"],
         shell:
             "samtools merge -@ {threads} {output} {input} 2> {log}"
 
@@ -128,13 +131,13 @@ if PAIRED_END:
             "results/mapped/merged/{sample}.bam",
         output:
             "results/mapped/{sample}.bam",
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
         log:
             "logs/samtools_view/read2/{sample}.log",
         conda:
             "../envs/mapping.yaml"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources:
+            runtime=config["resources"]["samtools"]["time"],
         shell:
             "samtools view -f 128 -b -@ {threads} -o {output} {input} 2> {log}"
 
@@ -146,13 +149,13 @@ else:
             "results/star/genome/{unit}.Aligned.out.bam",
         output:
             temp("results/mapped/genome/{unit}.sorted.bam"),
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
         log:
             "logs/samtools_sort/{unit}.log",
         conda:
             "../envs/mapping.yaml"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources:
+            runtime=config["resources"]["samtools"]["time"],
         shell:
             "samtools sort -n -u -@ {threads} {input} 2> {log} | "
             "samtools sort -@ {threads} -o {output} - 2>> {log}"
@@ -173,20 +176,20 @@ else:
                 if config["umi_tools"]["dedup_stats"]
                 else []
             ),
+        log:
+            "logs/umi_tools/dedup/{unit}.log",
+        conda:
+            "../envs/umi_tools.yaml"
+        threads: config["resources"]["umi_tools"]["cpu"]
+        resources:
+            runtime=config["resources"]["umi_tools"]["time"],
+            mem_mb=32000,
         params:
             stats=lambda wildcards: (
                 f"--output-stats results/qc/umi_tools/{wildcards.unit}"
                 if config["umi_tools"]["dedup_stats"]
                 else ""
             ),
-        threads: config["resources"]["umi_tools"]["cpu"]
-        resources:
-            runtime=config["resources"]["umi_tools"]["time"],
-            mem_mb=32000,
-        log:
-            "logs/umi_tools/dedup/{unit}.log",
-        conda:
-            "../envs/umi_tools.yaml"
         shell:
             "umi_tools dedup "
             "--random-seed 1 "
@@ -201,13 +204,13 @@ else:
             "results/mapped/dedup/{sample}.bam",
         output:
             "results/mapped/{sample}.bam",
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
         log:
             "logs/samtools_sort/dedup/{sample}.log",
         conda:
             "../envs/mapping.yaml"
+        threads: config["resources"]["samtools"]["cpu"]
+        resources:
+            runtime=config["resources"]["samtools"]["time"],
         shell:
             "samtools sort -@ {threads} -o {output} {input} 2> {log}"
 
@@ -217,13 +220,13 @@ rule bam_index:
         "results/{path}.bam",
     output:
         "results/{path}.bam.bai",
-    params:
-        extra="",  # optional params string
+    log:
+        "logs/samtools_index/{path}.log",
     threads: config["resources"]["samtools"]["cpu"]
     resources:
         runtime=config["resources"]["samtools"]["time"],
-    log:
-        "logs/samtools_index/{path}.log",
+    params:
+        extra="",  # optional params string
     wrapper:
         f"{wrapper_version}/bio/samtools/index"
 
@@ -234,12 +237,12 @@ rule mapped_readnum:
         "results/mapped/{sample}.bam",
     output:
         "results/mapped/{sample}.readnum.txt",
-    threads: 1
-    resources:
-        runtime=15,
     log:
         "logs/samtools_view/readnum/{sample}.log",
     conda:
         "../envs/mapping.yaml"
+    threads: 1
+    resources:
+        runtime=15,
     shell:
         "samtools view -c -F 4 {input} > {output} 2> {log}"
