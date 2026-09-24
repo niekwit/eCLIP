@@ -4,7 +4,7 @@ import glob
 import datetime
 import itertools
 import pandas as pd
-from scripts.resources import Resources
+from scripts.resources import GenomeResources
 import scripts.adapters as adapters
 from snakemake.utils import min_version, validate
 from snakemake.logging import logger

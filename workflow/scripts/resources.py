@@ -1,7 +1,7 @@
 import os
 
 
-class Resources:
+class GenomeResources:
     """Gets URLs and file names of the reference files used by the ENCODE eCLIP pipeline
     for a given genome.
 
