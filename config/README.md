@@ -46,4 +46,6 @@ Paired-end (each IP library carries two inline barcodes, the size-matched input 
 
 # config.yaml
 
+`demultiplexed` (paired-end only): set to `True` if the reads are already demultiplexed, i.e. the inline barcodes are removed from read 1 and the UMI is at the start of the read name (`@UMI:readname`), as is the case for FASTQ files from the ENCODE portal. The demultiplexing step (eclipdemux) is skipped then. The `barcode_a` and `barcode_b` columns of `samples.csv` are still required, because they determine the adapters that are trimmed.
+
 All settings have the ENCODE eCLIP pipeline (eCLIP-seq Processing Pipeline v2.2) values as default. Use Python style booleans (`True`/`False`).

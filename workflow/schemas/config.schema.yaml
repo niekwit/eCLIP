@@ -9,6 +9,9 @@ properties:
     - hg19
     - mm10
     description: Genome (GENCODE)
+  demultiplexed:
+    type: boolean
+    description: Paired-end reads are already demultiplexed
   umi:
     type: object
     properties:
@@ -226,6 +229,7 @@ properties:
     - idr
 required:
 - genome
+- demultiplexed
 - umi
 - cutadapt
 - star

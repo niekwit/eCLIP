@@ -1,6 +1,8 @@
 # ENCODE: identify UMIs (single-end: umi_tools; paired-end: eclipdemux, which also demultiplexes the
-# inline barcodes) and trim adapters twice with cutadapt (to remove double ligation events)
-if PAIRED_END:
+# inline barcodes) and trim adapters twice with cutadapt (to remove double ligation events).
+# Paired-end reads that are already demultiplexed (e.g. FASTQ files from the ENCODE portal: inline
+# barcodes removed and UMI in the read name) are only trimmed.
+if PAIRED_END and not DEMULTIPLEXED:
 
     rule demux_pe:
         input:
@@ -101,6 +103,80 @@ if PAIRED_END:
             adapters=lambda wildcards: cutadapt_args(
                 f"{wildcards.sample}.{wildcards.barcode}", 2
             ),
+            error_rate=config["cutadapt"]["error_rate"],
+            quality_cutoff=config["cutadapt"]["quality_cutoff"],
+            min_length=config["cutadapt"]["min_length"],
+        shell:
+            "cutadapt "
+            "--match-read-wildcards "
+            "--times 1 "
+            "-e {params.error_rate} "
+            "-O 5 "
+            "--quality-cutoff {params.quality_cutoff} "
+            "-m {params.min_length} "
+            "-j {threads} "
+            "{params.adapters} "
+            "-o {output.r1} "
+            "-p {output.r2} "
+            "{input.r1} "
+            "{input.r2} "
+            "> {output.qc} 2> {log}"
+
+elif PAIRED_END:
+
+    rule cutadapt_pe_demultiplexed_round1:
+        input:
+            r1="reads/{unit}_R1_001.fastq.gz",
+            r2="reads/{unit}_R2_001.fastq.gz",
+        output:
+            r1=temp("results/trimmed/round1/{unit}.r1.fq.gz"),
+            r2=temp("results/trimmed/round1/{unit}.r2.fq.gz"),
+            qc="results/qc/cutadapt/round1/{unit}.txt",
+        log:
+            "logs/cutadapt/{unit}.round1.log",
+        conda:
+            "../envs/trimming.yaml"
+        threads: config["resources"]["trim"]["cpu"]
+        resources:
+            runtime=config["resources"]["trim"]["time"],
+        params:
+            adapters=lambda wildcards: cutadapt_args(wildcards.unit, 1),
+            error_rate=config["cutadapt"]["error_rate"],
+            quality_cutoff=config["cutadapt"]["quality_cutoff"],
+            min_length=config["cutadapt"]["min_length"],
+        shell:
+            "cutadapt "
+            "--match-read-wildcards "
+            "--times 1 "
+            "-e {params.error_rate} "
+            "-O 1 "
+            "--quality-cutoff {params.quality_cutoff} "
+            "-m {params.min_length} "
+            "-j {threads} "
+            "{params.adapters} "
+            "-o {output.r1} "
+            "-p {output.r2} "
+            "{input.r1} "
+            "{input.r2} "
+            "> {output.qc} 2> {log}"
+
+    rule cutadapt_pe_demultiplexed_round2:
+        input:
+            r1="results/trimmed/round1/{unit}.r1.fq.gz",
+            r2="results/trimmed/round1/{unit}.r2.fq.gz",
+        output:
+            r1=temp("results/trimmed/round2/{unit}.r1.fq.gz"),
+            r2=temp("results/trimmed/round2/{unit}.r2.fq.gz"),
+            qc="results/qc/cutadapt/round2/{unit}.txt",
+        log:
+            "logs/cutadapt/{unit}.round2.log",
+        conda:
+            "../envs/trimming.yaml"
+        threads: config["resources"]["trim"]["cpu"]
+        resources:
+            runtime=config["resources"]["trim"]["time"],
+        params:
+            adapters=lambda wildcards: cutadapt_args(wildcards.unit, 2),
             error_rate=config["cutadapt"]["error_rate"],
             quality_cutoff=config["cutadapt"]["quality_cutoff"],
             min_length=config["cutadapt"]["min_length"],

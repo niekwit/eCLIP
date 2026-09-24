@@ -85,17 +85,20 @@ def se_adapters(name):
     return chunks
 
 
-def pe_read2_adapters(barcode_ids):
+def pe_read2_adapters(barcode_ids, include_n=True):
     """
     Returns 3' adapter chunks of read 2 for paired-end eCLIP (cutadapt -A)
 
-    These consist of the reverse complement of the inline barcode(s) followed by the read 2 adapter
+    These consist of the reverse complement of the inline barcode(s) followed by the read 2 adapter.
+    Chunks with the random bases (N) of some barcodes can be omitted: in the second round of trimming
+    (minimum overlap of 5) these match the last bases of any read (e.g. NNNNACAGGAAGATC matches
+    the last 5 bases of a read that end with an A), which removes real sequence.
     """
     chunks = []
     for barcode_id in barcode_ids:
         full = revcomp(PE_BARCODES[barcode_id]) + R2_ADAPTER
         for chunk in sliding_windows(full):
-            if chunk not in chunks:
+            if chunk not in chunks and (include_n or "N" not in chunk):
                 chunks.append(chunk)
 
     return chunks

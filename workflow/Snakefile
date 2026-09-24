@@ -30,6 +30,7 @@ resources = GenomeResources(genome)
 
 # Get wildcard values
 PAIRED_END = paired_end()
+DEMULTIPLEXED = PAIRED_END and config["demultiplexed"]
 ENDS = [1, 2] if PAIRED_END else [1]
 IP_SAMPLES, INPUT_SAMPLES, SAMPLES = samples(PAIRED_END)
 UNITS = units()

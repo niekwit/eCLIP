@@ -146,7 +146,7 @@ def units():
     """
     _units = {}
     for sample in SAMPLES:
-        if PAIRED_END:
+        if PAIRED_END and not DEMULTIPLEXED:
             for barcode in sample_barcodes(sample):
                 _units[f"{sample}.{barcode}"] = sample
         else:
@@ -214,11 +214,26 @@ def cutadapt_args(unit, round_):
         if round_ == 1:
             args.append(f"-a {adapters.PE_R1_ADAPTER}")
             args.extend(f"-g {x}" for x in adapters.pe_read1_5p_adapters(barcodes))
-        args.extend(f"-A {x}" for x in adapters.pe_read2_adapters(barcodes))
+        # Second round: no chunks with random bases (N) of the barcodes, see adapters.py
+        args.extend(
+            f"-A {x}"
+            for x in adapters.pe_read2_adapters(barcodes, include_n=round_ == 1)
+        )
     else:
         args = [f"-a {x}" for x in adapters.se_adapters(se_adapter(sample))]
 
     return " ".join(args)
+
+
+def select_read2_input(wildcards):
+    """
+    Returns BAM file (paired-end) from which read 2 is selected: the merged inline barcodes,
+    or the only BAM file if the reads are already demultiplexed
+    """
+    if DEMULTIPLEXED:
+        return f"results/mapped/genome/{wildcards.sample}.rmdup.sorted.bam"
+    else:
+        return f"results/mapped/merged/{wildcards.sample}.bam"
 
 
 def star_input(wildcards):
