@@ -4,3 +4,5 @@ resources/*
 !resources/gencode.v29.annotation.gtf
 !resources/ENCFF269URO.bed
 report.zip
+.downloads/
+clipper_genes.txt
