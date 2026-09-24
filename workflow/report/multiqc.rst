@@ -1,0 +1,1 @@
+MultiQC report of FastQC (raw reads and after each round of adapter trimming), cutadapt and STAR (repeat element and genome mapping).

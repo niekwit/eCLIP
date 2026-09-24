@@ -1,0 +1,14 @@
+name: yeolab_py2
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # eclipdemux and barcodecollapsepe.py (Yeo lab) are Python 2 code (used with Python 2.7 by ENCODE)
+  - python=2.7
+  - pip
+  - pysam=0.15.4
+  - future=0.18.2
+  - samtools=1.9
+  - pip:
+    - git+https://github.com/YeoLab/eclipdemux.git@2ccc6b6b15f92b4613bb489c693d0567313baf3b

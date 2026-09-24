@@ -1,13 +1,24 @@
-genome: hg38
-ensembl_genome_build: "110"
-fdr_cutoff: 0.05 
-fc_cutoff: 0.5 
-barcode_length: 8
-STAR:
-  extra: ""
-bigwig:
-  binSize: 1
-  normalise: CPM
+# Notes:
+# Use Python style for boolean values (True/False)
+genome: hg38 # hg38 (GENCODE v29), hg19 (GENCODE v19) or mm10 (GENCODE vM25)
+umi:
+  se_length: 10 # Length of UMI (random-mer) at the 5' end of read 1 of single-end eCLIP (umi_tools extract)
+  pe_length: 5 # Length of UMI (random-mer) of paired-end eCLIP (eclipdemux --length)
+cutadapt: # ENCODE runs cutadapt twice (round 1: -O 1, round 2: -O 5) to remove double ligation events
+  se_adapter: InvRil19 # Default adapter set for single-end reads: InvRil19 or InvRNA1 - InvRNA8 (can be set per sample in samples.csv)
+  error_rate: 0.1
+  quality_cutoff: 6
+  min_length: 18
+star:
+  repeats_extra: "" # Extra parameters for STAR mapping to repeat elements
+  genome_extra: "" # Extra parameters for STAR mapping to the genome
+umi_tools:
+  dedup_stats: True # Write umi_tools dedup stats (requires a lot of memory)
+clipper:
+  extra: "" # Extra parameters for CLIPper
+peaks:
+  l10p: 3 # -log10(p-value) cutoff for significant peaks (narrowPeak score and total entropy)
+  l2fc: 3 # log2 fold change (over size-matched input) cutoff for significant peaks
 resources: # computing resources
   trim:
     cpu: 8
@@ -17,19 +28,25 @@ resources: # computing resources
     time: 60
   star_index:
     cpu: 36
-    time: 60
+    time: 90
   mapping:
     cpu: 12
     time: 120
   samtools:
     cpu: 4
-    time: 30
-  deeptools:
-    cpu: 6
     time: 60
-  pureclip:
-    cpu: 12
-    time: 120
-  plotting:
+  umi_tools:
+    cpu: 4
+    time: 240
+  bigwig:
     cpu: 2
-    time: 20
+    time: 60
+  clipper:
+    cpu: 12
+    time: 240
+  peaks:
+    cpu: 2
+    time: 240
+  idr:
+    cpu: 2
+    time: 120

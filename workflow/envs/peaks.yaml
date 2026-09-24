@@ -1,0 +1,16 @@
+name: peaks
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - perl=5.32
+  - perl-statistics-basic=1.6611
+  - perl-statistics-distributions=1.02
+  - perl-statistics-r=0.34
+  - r-base=4.3
+  - python=3.10
+  - pandas=2.1.4
+  - samtools=1.21
+  - bedtools=2.31.1
+  - ucsc-bedtobigbed=482

@@ -1,0 +1,29 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: Samples file
+
+properties:
+  sample:
+    type: string
+    pattern: "^[A-Za-z0-9_]+$"
+    description: sample name/identifier
+  control:
+    type: string
+    pattern: "^[A-Za-z0-9_]*$"
+    description: name of the size-matched input sample (empty for the input samples themselves)
+  adapter:
+    type: string
+    enum: ["", "InvRil19", "InvRNA1", "InvRNA2", "InvRNA3", "InvRNA4", "InvRNA5", "InvRNA6", "InvRNA7", "InvRNA8"]
+    description: 3' adapter set of single-end libraries
+  barcode_a:
+    type: string
+    enum: ["", "A01", "B06", "C01", "D8f", "A03", "G07", "A04", "F05", "NIL"]
+    description: inline barcode ID of paired-end libraries
+  barcode_b:
+    type: string
+    enum: ["", "A01", "B06", "C01", "D8f", "A03", "G07", "A04", "F05", "NIL"]
+    description: inline barcode ID of paired-end libraries
+
+required:
+  - sample
+  - control

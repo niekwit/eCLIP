@@ -1,0 +1,14 @@
+name: mapping
+channels: 
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - star=2.7.11b
+  - samtools=1.21
+  - fastq-tools=0.8.3
+  - pigz=2.8
+  - gawk=5.3.1
+  - wget=1.21.4
+  - multiqc=1.25.2
+  - python=3.12
