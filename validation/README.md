@@ -14,7 +14,7 @@ The workflow was run on a real ENCODE eCLIP experiment and the results were comp
 | Significant peaks (-log10 p ≥ 3 and log2 fold change ≥ 3) | 17,741 and 15,394 (ENCODE: 17,406 and 15,759)                                                |
 | IDR reproducible peaks                                   | 10,543 (ENCODE: 10,732)                                                                      |
 | Peak overlap (same strand)                               | 89-95% of the peaks of either analysis overlap a peak of the other                          |
-| Agreement of values in overlapping peaks                 | log2 fold change r = 0.94-0.99, -log10(p-value) r = 0.94-0.96 (Spearman 0.97-0.99)           |
+| Agreement of values in overlapping peaks                 | log2 fold change r = 0.94-0.99, -log10(p-value) r = 0.97-0.98 (Spearman 0.93-0.99)           |
 
 The peaks that do not overlap are weak calls (median -log10 p-value 0.2-0.5, only 0.5-1% pass the significance cutoffs) in both directions. 82% of the ENCODE reproducible peaks that are not in the IDR set of the workflow overlap a significant peak of at least one of its replicates, so these are borderline IDR calls.
 
@@ -94,13 +94,13 @@ Alignment level, compared with the ENCODE BAM files (read 2): for replicate 1, 9
 
 | Peak set                          | Overlapping pairs | log2FC Pearson | log2FC Spearman | -log10(p) Pearson | -log10(p) Spearman |
 | --------------------------------- | ----------------- | -------------- | --------------- | ----------------- | ------------------ |
-| Replicate 1, all peaks            | 242,179           | 0.988          | 0.987           | 0.962             | 0.986              |
-| Replicate 1, significant peaks    | 16,609            | 0.949          | 0.941           | 0.952             | 0.981              |
-| Replicate 2, all peaks            | 167,958           | 0.980          | 0.977           | 0.942             | 0.972              |
-| Replicate 2, significant peaks    | 14,068            | 0.936          | 0.925           | 0.950             | 0.969              |
-| IDR reproducible peaks            | 9,806             | 0.945          | 0.941           | 0.955             | 0.967              |
+| Replicate 1, all peaks            | 242,179           | 0.989          | 0.988           | 0.978             | 0.987              |
+| Replicate 1, significant peaks    | 16,609            | 0.958          | 0.948           | 0.967             | 0.986              |
+| Replicate 2, all peaks            | 167,958           | 0.982          | 0.978           | 0.970             | 0.974              |
+| Replicate 2, significant peaks    | 14,068            | 0.944          | 0.931           | 0.973             | 0.973              |
+| IDR reproducible peaks            | 9,806             | 0.953          | 0.947           | 0.973             | 0.971              |
 
-Overlap is on the same strand, and correlations are of the best overlapping ENCODE peak of each workflow peak. Remaining differences are expected: the workflow uses newer versions of the tools (STAR 2.7.11b, cutadapt 5.1, umi_tools/IDR versions, CLIPper from the current YeoLab repository), a Dfam based repeat element reference instead of RepBase, and the random choice of the retained read between PCR duplicates.
+Overlap is on the same strand, and correlations are of the ENCODE peak with the largest overlap for each workflow peak. Remaining differences are expected: the workflow uses newer versions of the tools (STAR 2.7.11b, cutadapt 5.1, umi_tools/IDR versions, CLIPper from the current YeoLab repository), a Dfam based repeat element reference instead of RepBase, and the random choice of the retained read between PCR duplicates.
 
 ## Issues found with this data set
 

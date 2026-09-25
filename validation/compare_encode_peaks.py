@@ -53,17 +53,28 @@ def significant(df):
     return df[(df.l10p >= args.l10p) & (df.l2fc >= args.l2fc)].reset_index(drop=True)
 
 
+def percentage(n, total):
+    """Percentage as string, n/a if there is nothing to compare (empty peak set)"""
+    return f"{100 * n / total:.1f}%" if total else "n/a"
+
+
 def overlaps(a, b, tag):
-    """Overlapping peaks (same strand) of a and b, as index pairs"""
+    """Overlapping peaks (same strand) of a and b, as index pairs with the length of the overlap"""
     for name, df in (("a", a), ("b", b)):
         out = df.assign(i=range(len(df)))[["chrom", "start", "end", "i", "l2fc", "strand"]]
         out.sort_values(["chrom", "start"]).to_csv(f"{TMP}/{tag}_{name}.bed", sep="\t", header=False, index=False)
     out = subprocess.run(
-        [args.bedtools, "intersect", "-s", "-wa", "-wb", "-a", f"{TMP}/{tag}_a.bed", "-b", f"{TMP}/{tag}_b.bed"],
+        [args.bedtools, "intersect", "-s", "-wo", "-a", f"{TMP}/{tag}_a.bed", "-b", f"{TMP}/{tag}_b.bed"],
         capture_output=True, text=True, check=True,
     ).stdout
     rows = [line.split("\t") for line in out.strip().split("\n") if line]
-    return pd.DataFrame({"ia": [int(r[3]) for r in rows], "ib": [int(r[9]) for r in rows]})
+    return pd.DataFrame(
+        {
+            "ia": [int(r[3]) for r in rows],
+            "ib": [int(r[9]) for r in rows],
+            "overlap": [int(r[12]) for r in rows],  # last column of -wo: number of overlapping bases
+        }
+    )
 
 
 def compare(mine, enc, label):
@@ -72,15 +83,19 @@ def compare(mine, enc, label):
         "peak set": label,
         "this workflow": len(mine),
         "ENCODE": len(enc),
-        "workflow peaks overlapping ENCODE": f"{ov.ia.nunique()} ({100 * ov.ia.nunique() / len(mine):.1f}%)",
-        "ENCODE peaks overlapping workflow": f"{ov.ib.nunique()} ({100 * ov.ib.nunique() / len(enc):.1f}%)",
+        "workflow peaks overlapping ENCODE": f"{ov.ia.nunique()} ({percentage(ov.ia.nunique(), len(mine))})",
+        "ENCODE peaks overlapping workflow": f"{ov.ib.nunique()} ({percentage(ov.ib.nunique(), len(enc))})",
     }
-    best = ov.drop_duplicates("ia")
+    # ENCODE peak with the largest overlap for each workflow peak
+    best = ov.sort_values("overlap", ascending=False).drop_duplicates("ia")
     m, e = mine.iloc[best.ia.values].reset_index(drop=True), enc.iloc[best.ib.values].reset_index(drop=True)
     corr = {"peak set": label, "overlapping pairs": len(best)}
     for col, name in (("l2fc", "log2FC"), ("l10p", "-log10(p)")):
-        corr[f"{name} Pearson"] = round(float(np.corrcoef(m[col], e[col])[0, 1]), 3)
-        corr[f"{name} Spearman"] = round(float(pd.Series(m[col].values).corr(pd.Series(e[col].values), method="spearman")), 3)
+        if len(best) > 1:
+            corr[f"{name} Pearson"] = round(float(np.corrcoef(m[col], e[col])[0, 1]), 3)
+            corr[f"{name} Spearman"] = round(float(pd.Series(m[col].values).corr(pd.Series(e[col].values), method="spearman")), 3)
+        else:
+            corr[f"{name} Pearson"] = corr[f"{name} Spearman"] = "n/a"
     return summary, corr, ov
 
 
@@ -101,8 +116,8 @@ for label, sample, accession in (("replicate 1", args.sample1, args.rep1), ("rep
             only_mine = not_overlapping(mine, ov, "ia")
             print(
                 f"{label}: peaks without overlap: ENCODE {len(only_enc)} (median -log10(p) {only_enc.l10p.median():.2f}, "
-                f"{100 * len(significant(only_enc)) / len(only_enc):.1f}% significant), workflow {len(only_mine)} "
-                f"(median -log10(p) {only_mine.l10p.median():.2f}, {100 * len(significant(only_mine)) / len(only_mine):.1f}% significant)"
+                f"{percentage(len(significant(only_enc)), len(only_enc))} significant), workflow {len(only_mine)} "
+                f"(median -log10(p) {only_mine.l10p.median():.2f}, {percentage(len(significant(only_mine)), len(only_mine))} significant)"
             )
 
 mine_idr = read_mine(os.path.join(args.results, "idr", f"{args.sample1}_vs_{args.sample2}", f"{args.sample1}_vs_{args.sample2}.reproducible_peaks.bed"))
