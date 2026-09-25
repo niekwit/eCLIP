@@ -103,7 +103,9 @@ Copy or symlink the FASTQ files of **all** libraries (IP and size-matched input)
 | Single-end   | `reads/{sample}.fastq.gz`                                              |
 | Paired-end   | `reads/{sample}_R1_001.fastq.gz` and `reads/{sample}_R2_001.fastq.gz`  |
 
-Paired-end means ENCODE-style eCLIP where read 1 starts with an inline barcode and read 2 starts with the UMI (not demultiplexed). Single-end means seCLIP, where the first 10 nt of the read are the UMI.
+Paired-end means ENCODE-style eCLIP where read 1 starts with an inline barcode and read 2 starts with the UMI. Single-end means seCLIP, where the first 10 nt of the read are the UMI.
+
+> **FASTQ files from the ENCODE portal are already demultiplexed** (the inline barcodes are removed from read 1 and the UMI is the first part of the read name, e.g. `@CAAAA:HWI-D00611:...`). For these files, set `demultiplexed: True` in `config/config.yaml`: the demultiplexing step is skipped and each library is processed as a whole. The barcode IDs in `samples.csv` are still needed, as they define the adapters that are trimmed. Leave it `False` for raw reads.
 
 ### 4. Describe your samples
 
@@ -236,6 +238,12 @@ Columns of `.peaks.bed` and `.reproducible_peaks.bed`: chromosome, start, end, -
 * *IDR fails*: it needs a reasonable number of peaks in both replicates (hundreds); very shallow or failed libraries do not have these.
 * *STAR runs out of memory*: increase `mem_mb` of the STAR rules (`star_index_genome`, `star_repeats`, `star_genome` in `workflow/rules/`) or use fewer parallel jobs.
 * Failed jobs write their errors to `logs/<tool>/<sample>.log`.
+
+---
+
+## Validation
+
+The workflow was validated on the ENCODE experiment [ENCSR202BFN](https://www.encodeproject.org/experiments/ENCSR202BFN/) (U2AF2 eCLIP in HepG2, paired-end): the numbers of usable reads and peaks are within about 2% of ENCODE, 89-95% of the peaks overlap, and fold changes and p-values of overlapping peaks correlate with r = 0.94-0.99. Details, the exact steps and the comparison script are in [validation/](validation/README.md).
 
 ---
 

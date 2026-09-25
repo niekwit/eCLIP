@@ -1,6 +1,7 @@
 # Notes:
 # Use Python style for boolean values (True/False)
 genome: hg38 # hg38 (GENCODE v29), hg19 (GENCODE v19) or mm10 (GENCODE vM25)
+demultiplexed: False # Paired-end only: reads are already demultiplexed (inline barcodes removed, UMI in read name), e.g. FASTQ files from the ENCODE portal
 umi:
   se_length: 10 # Length of UMI (random-mer) at the 5' end of read 1 of single-end eCLIP (umi_tools extract)
   pe_length: 5 # Length of UMI (random-mer) of paired-end eCLIP (eclipdemux --length)
