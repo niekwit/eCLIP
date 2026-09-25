@@ -55,6 +55,25 @@ Differences with the ENCODE pipeline:
 
 ---
 
+## Repeat elements and transposable elements
+
+As in the ENCODE pipeline, reads from repeat elements are **removed** before the genome analysis, and transposable element (TE) derived reads are not analysed separately:
+
+1. **Repeat element filter.** After adapter trimming, reads are mapped with STAR to a repeat element reference (`resources/{genome}_repeat_elements.fa`), which is built on the first run: the curated consensus sequences of the species from [Dfam](https://www.dfam.org) (for human ~1,400 families, e.g. LINE-1 (L1HS, L1PA, L1M, ...), Alu, SVA, LTR/ERV, DNA transposons and several small non-coding RNAs) plus the rDNA repeating unit (NCBI). Mapping is end-to-end, and a read may map to up to 30 places (`--outFilterMultimapNmax 30`), so reads from multi-copy elements are caught. **Reads that map are discarded; only the reads that do not map continue to the genome mapping.** The STAR log of this step (`results/star/repeats/`, in the MultiQC report) gives the fraction of reads that were removed.
+2. **Genome mapping.** The remaining reads are mapped to the genome, **keeping only reads with a unique alignment** (`--outFilterMultimapNmax 1`, as ENCODE). Reads from multi-copy TEs that were not caught by the repeat filter are lost in this step.
+3. **Peak calling.** CLIPper, input normalisation and IDR use only these unique, PCR-duplicate removed reads. There is no masking or annotation of peaks with TEs (RepeatMasker), the only region filter is the ENCODE eCLIP blacklist.
+
+What this means for TEs:
+
+* Reads that resemble the consensus sequence of a TE family are removed and are not counted anywhere. The repeat-mapped alignments are not kept (they are deleted at the end of the run) and there is no quantification per repeat family.
+* Reads from TE copies that are diverged from the consensus (typically old families such as L2, MIR or old L1M) and that map to a single genomic position are retained, so peaks in TEs can appear in the results. Peaks in TE-derived sequence therefore cover only part of the TE-derived signal.
+* Reads that map equally well to multiple genomic copies are never used, so a locus specific analysis of TE binding is not possible with this workflow.
+* Dfam consensus sequences are used instead of the RepBase sequences of ENCODE (RepBase is not freely available), so the reads that are removed are not exactly the same as in ENCODE.
+
+An analysis of TE-bound RNA (for example enrichment per repeat family over the size-matched input) is **not** part of the workflow.
+
+---
+
 ## Usage
 
 ### 1. Install Snakemake
