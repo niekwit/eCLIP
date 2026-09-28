@@ -12,8 +12,9 @@ rule get_fasta:
         runtime=30,
     params:
         url=resources.fasta_url,
-    script:
-        "../scripts/get_resource.sh"
+    shell:
+        "wget -q {params.url} -O {output}.gz 2> {log} && "
+        "pigz -df {output}.gz 2>> {log}"
 
 
 use rule get_fasta as get_gtf with:
