@@ -103,32 +103,34 @@ if PAIRED_END:
         shell:
             "samtools sort -@ {threads} -o {output} {input} 2> {log}"
 
-    rule merge_barcodes_pe:
-        # Merges the technical replicates (the two inline barcodes)
-        input:
-            lambda wildcards: expand(
-                "results/mapped/genome/{unit}.rmdup.sorted.bam",
-                unit=[
-                    f"{wildcards.sample}.{x}"
-                    for x in sample_barcodes(wildcards.sample)
-                ],
-            ),
-        output:
-            temp("results/mapped/merged/{sample}.bam"),
-        log:
-            "logs/samtools_merge/{sample}.log",
-        conda:
-            "../envs/mapping.yaml"
-        threads: config["resources"]["samtools"]["cpu"]
-        resources:
-            runtime=config["resources"]["samtools"]["time"],
-        shell:
-            "samtools merge -@ {threads} {output} {input} 2> {log}"
+    if not DEMULTIPLEXED:
+
+        rule merge_barcodes_pe:
+            # Merges the technical replicates (the two inline barcodes)
+            input:
+                lambda wildcards: expand(
+                    "results/mapped/genome/{unit}.rmdup.sorted.bam",
+                    unit=[
+                        f"{wildcards.sample}.{x}"
+                        for x in sample_barcodes(wildcards.sample)
+                    ],
+                ),
+            output:
+                temp("results/mapped/merged/{sample}.bam"),
+            log:
+                "logs/samtools_merge/{sample}.log",
+            conda:
+                "../envs/mapping.yaml"
+            threads: config["resources"]["samtools"]["cpu"]
+            resources:
+                runtime=config["resources"]["samtools"]["time"],
+            shell:
+                "samtools merge -@ {threads} {output} {input} 2> {log}"
 
     rule select_read2_pe:
         # Only read 2 is used with the single stranded peak caller (final BAM file)
         input:
-            "results/mapped/merged/{sample}.bam",
+            select_read2_input,
         output:
             "results/mapped/{sample}.bam",
         log:
