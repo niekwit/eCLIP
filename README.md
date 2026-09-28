@@ -243,7 +243,7 @@ Columns of `.peaks.bed` and `.reproducible_peaks.bed`: chromosome, start, end, -
 
 ## Validation
 
-The workflow was validated on the ENCODE experiment [ENCSR202BFN](https://www.encodeproject.org/experiments/ENCSR202BFN/) (U2AF2 eCLIP in HepG2, paired-end): the numbers of usable reads and peaks are within about 2% of ENCODE, 89-95% of the peaks overlap, and fold changes and p-values of overlapping peaks correlate with r = 0.94-0.99. Details, the exact steps and the comparison script are in [validation/](validation/README.md).
+The workflow was validated on two ENCODE eCLIP experiments (U2AF2, paired-end): [ENCSR202BFN](https://www.encodeproject.org/experiments/ENCSR202BFN/) in HepG2 and [ENCSR893RAV](https://www.encodeproject.org/experiments/ENCSR893RAV/) in K562. For both, the numbers of usable reads and peaks are within about 2% of ENCODE, 89-96% of the peaks overlap, and fold changes and p-values of overlapping peaks correlate with r = 0.93-0.99. Details, the exact steps and the comparison script are in [validation/](validation/README.md).
 
 ---
 
