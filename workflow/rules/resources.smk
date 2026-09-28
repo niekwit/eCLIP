@@ -125,9 +125,18 @@ rule star_index_genome:
         runtime=config["resources"]["star_index"]["time"],
         mem_mb=40000,
     params:
-        gtf=lambda wildcards, input: input.gtf,
-    script:
-        "../scripts/star_index.sh"
+        index_args=lambda wildcards, input: star_index_args(input.fai),
+    shell:
+        "STAR "
+        "--runMode genomeGenerate "
+        "--genomeDir {output} "
+        "--genomeFastaFiles {input.fasta} "
+        "--sjdbGTFfile {input.gtf} "
+        "--runThreadN {threads} "
+        "{params.index_args} "
+        "--outFileNamePrefix {output}/ "
+        "--outTmpDir {output}/_STARtmp "
+        "> {log} 2>&1"
 
 
 rule star_index_repeats:
@@ -146,9 +155,17 @@ rule star_index_repeats:
         runtime=config["resources"]["star_index"]["time"],
         mem_mb=8000,
     params:
-        gtf="",  # no annotation
-    script:
-        "../scripts/star_index.sh"
+        index_args=lambda wildcards, input: star_index_args(input.fai),
+    shell:
+        "STAR "
+        "--runMode genomeGenerate "
+        "--genomeDir {output} "
+        "--genomeFastaFiles {input.fasta} "
+        "--runThreadN {threads} "
+        "{params.index_args} "
+        "--outFileNamePrefix {output}/ "
+        "--outTmpDir {output}/_STARtmp "
+        "> {log} 2>&1"
 
 
 use rule index_fasta as index_repeats with:

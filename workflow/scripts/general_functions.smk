@@ -1,6 +1,7 @@
 import os
 import re
 import glob
+import math
 import datetime
 import itertools
 import pandas as pd
@@ -31,6 +32,30 @@ def yeolab_script(name):
     Returns path of downloaded Yeo lab script
     """
     return f"resources/yeolab/{name}"
+
+
+def star_index_args(fai):
+    """
+    Returns --genomeSAindexNbases and --genomeChrBinNbits arguments for STAR genome index
+    generation, computed from a fasta index (.fai) file as recommended by the STAR manual:
+
+      genomeSAindexNbases: min(14, log2(genome length) / 2 - 1)
+      genomeChrBinNbits: min(18, log2(average reference length), at least log2(100))
+
+    The latter matters for a reference with many short sequences, such as the repeat
+    element reference (too high a value wastes memory on a genome with short references).
+    """
+    lengths = [int(line.split("\t")[1]) for line in open(fai)]
+    genome_length = sum(lengths)
+
+    sa_index_nbases = min(14, int(math.log2(genome_length) / 2 - 1))
+
+    average_length = max(100, genome_length / len(lengths))
+    chr_bin_nbits = min(18, int(math.log2(average_length)))
+
+    return (
+        f"--genomeSAindexNbases {sa_index_nbases} --genomeChrBinNbits {chr_bin_nbits}"
+    )
 
 
 def paired_end():
