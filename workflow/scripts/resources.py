@@ -28,6 +28,10 @@ class GenomeResources:
                 # CLIPper's built-in annotation, matches ENCODE's own eCLIP pipeline exactly
                 # (see the "Why GENCODE v29 for hg38?" section of the README)
                 self.clipper_species = "GRCh38_v29e"
+            elif release == "40":
+                # CLIPper's other built-in human annotation (see clipper/data/): using it
+                # directly is faster and more trustworthy than building a replica of it
+                self.clipper_species = "GRCh38_v40"
             else:
                 # CLIPper has no built-in annotation for this release: one is built from the
                 # GTF above (see rule build_clipper_annotation), and passed to CLIPper with
