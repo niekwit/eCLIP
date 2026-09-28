@@ -9,6 +9,9 @@ properties:
     - hg19
     - mm10
     description: Genome (GENCODE)
+  gencode_release:
+    type: string
+    description: hg38 only, optional; a different GENCODE human release than the default (v29)
   demultiplexed:
     type: boolean
     description: Paired-end reads are already demultiplexed

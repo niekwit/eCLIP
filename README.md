@@ -51,7 +51,37 @@ Differences with the ENCODE pipeline:
 
 * The repeat element filter uses a free substitute for RepBase (which is not freely available): the curated Dfam consensus sequences of the species plus the rDNA repeating unit. The repeat-mapped BAM files are not kept.
 * Current versions of the tools (STAR, cutadapt, umi_tools) are used instead of the versions in the SOP. IDR 2.0.2 can not be installed anymore, so IDR 2.0.4.2 is used. Yeo lab scripts that are not on conda (CLIPper, eclipdemux, and the perl/python scripts for input normalisation and IDR) are used at fixed commits.
-* Genome and annotation are from GENCODE (hg38: v29, hg19: v19, mm10: vM25), which is what CLIPper's built-in annotations are based on.
+* Genome and annotation are from GENCODE (hg38: v29, hg19: v19, mm10: vM25), which is what CLIPper's built-in annotations are based on (see below).
+
+### Why GENCODE v29 for hg38?
+
+CLIPper does not accept an arbitrary GTF: it ships its own pre-built annotation files for a fixed set of `--species` values, and the genome/GTF this workflow downloads has to match one of them exactly. For hg38, CLIPper also has a newer `GRCh38_v40` (GENCODE v40) option, but `v29e` is used instead because it is the exact annotation ENCODE's own eCLIP pipeline uses — this is what the [validation](validation/README.md) results are checked against. For hg19 and mm10, `hg19` and `mm10v25` are the newest annotations CLIPper provides for those genomes (no newer or ENCODE-specific variant exists there), and mm39 is not supported at all because CLIPper has no mm39 annotation.
+
+How much does this matter? Genome coordinates are identical across GENCODE releases (same GRCh38 assembly); only the annotation on top of it changes:
+
+| | v29 (2018) | v40 (2022) | v50 (2024, latest) |
+| --- | --- | --- | --- |
+| Protein-coding genes | 19,940 | 19,988 | 20,107 |
+| Protein-coding transcripts | 83,129 | 87,814 | 278,455 |
+| lncRNA genes | 7,635 | 17,748 | 34,866 |
+| Total genes | 58,721 | 61,544 | 78,733 |
+
+* **Protein-coding genes:** essentially unchanged (+0.8% from v29 to v50). For an mRNA-binding protein, the gene set CLIPper works with is nearly the same in v29 as in the latest release.
+* **Protein-coding transcript isoforms:** v29 to v40 barely changed (+6%), but v40 to v50 more than tripled (GENCODE's newer releases add many more long-read-supported alternative splice isoforms per gene). CLIPper classifies peaks by transcript region (exon/intron/UTR/proximal vs. distal intron), so a much richer isoform set can shift which region a peak is assigned to, without necessarily changing whether a peak is called there.
+* **lncRNAs:** more than 4x more lncRNA genes are annotated now than in v29. This is the real gap: for an RBP that binds lncRNAs, v29e is missing roughly half of today's annotated lncRNA loci.
+
+In short: staying on v29e for ENCODE parity costs almost nothing for protein-coding mRNA analyses, but is a genuine limitation for lncRNA-focused studies or fine isoform-level peak assignment.
+
+### Using a newer GENCODE release
+
+Set `gencode_release` in `config/config.yaml` to any human GENCODE release number (e.g. `"50"` for the latest) to use it instead of v29. Since CLIPper has no built-in annotation for releases other than v29e/v40, the workflow builds one automatically from the downloaded GTF (`rule build_clipper_annotation`, `workflow/scripts/build_clipper_annotation.py`):
+
+* one representative transcript per gene (the one with the largest genomic span, the same rule CLIPper's own annotation-building code uses) provides the gene coordinates and the `mrna_length`/`premrna_length` values CLIPper needs for its statistical test;
+* exons of every transcript of a gene are merged into a non-overlapping list, used for splice-aware read assignment.
+
+This replicates the two files CLIPper's ["Supporting additional species"](https://github.com/YeoLab/clipper/wiki/Supporting-additional-species) wiki page describes, and is passed to CLIPper with `--datadir` rather than modifying the installed package. It only runs when `gencode_release` is set to something other than `"29"`, and only builds these two files, not the full built-in CLIPper data directory (no `_genes.bed`, intron/UTR/poly-A region files etc., which CLIPper's core peak caller does not require, only its separate `clip_analysis` annotation tool does).
+
+Using a non-default `gencode_release` is **not validated against ENCODE** the way v29e is (see [validation/](validation/README.md)): peak positions and counts will differ, both because of the annotation itself and because CLIPper's per-gene statistical test uses the picked representative transcript's length, which can differ between releases.
 
 ---
 

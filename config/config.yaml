@@ -1,6 +1,7 @@
 # Notes:
 # Use Python style for boolean values (True/False)
 genome: hg38 # hg38 (GENCODE v29), hg19 (GENCODE v19) or mm10 (GENCODE vM25)
+gencode_release: "" # hg38 only: use a different GENCODE human release (e.g. "50" for the latest) instead of the ENCODE-matched v29. A custom CLIPper annotation is built automatically for it. Leave empty ("") for v29.
 demultiplexed: False # Paired-end only: reads are already demultiplexed (inline barcodes removed, UMI in read name), e.g. FASTQ files from the ENCODE portal
 umi:
   se_length: 10 # Length of UMI (random-mer) at the 5' end of read 1 of single-end eCLIP (umi_tools extract)

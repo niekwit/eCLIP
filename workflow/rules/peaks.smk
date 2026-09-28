@@ -4,6 +4,13 @@ rule clipper:
     input:
         bam="results/mapped/{sample}.bam",
         bai="results/mapped/{sample}.bam.bai",
+        # only built when the genome/annotation is not one of CLIPper's built-in species
+        # (see GenomeResources.clipper_custom and the "Why GENCODE v29 for hg38?" README section)
+        annotation=(
+            [resources.clipper_gff, resources.clipper_exons_bed]
+            if resources.clipper_custom
+            else []
+        ),
     output:
         "results/clipper/{sample}.peakClusters.bed",
     log:
@@ -15,10 +22,16 @@ rule clipper:
         runtime=config["resources"]["clipper"]["time"],
     params:
         species=resources.clipper_species,
+        datadir=(
+            f"--datadir {resources.clipper_datadir}"
+            if resources.clipper_custom
+            else ""
+        ),
         extra=config["clipper"]["extra"],
     shell:
         "clipper "
         "--species {params.species} "
+        "{params.datadir} "
         "--bam {input.bam} "
         "--outfile {output} "
         "--processors {threads} "

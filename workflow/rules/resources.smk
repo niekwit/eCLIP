@@ -26,6 +26,30 @@ use rule get_fasta as get_gtf with:
         url=resources.gtf_url,
 
 
+if resources.clipper_custom:
+
+    # CLIPper does not ship a pre-built annotation for this GENCODE release: build one
+    # from the GTF (see "Why GENCODE v29 for hg38?" in the README and the script for
+    # the exact CLIPper source functions this replicates)
+    rule build_clipper_annotation:
+        input:
+            gtf=resources.gtf,
+        output:
+            gff=resources.clipper_gff,
+            exons=resources.clipper_exons_bed,
+        log:
+            "logs/resources/build_clipper_annotation.log",
+        cache: False
+        conda:
+            "../envs/peaks.yaml"
+        threads: 1
+        resources:
+            runtime=30,
+            mem_mb=8000,
+        script:
+            "../scripts/build_clipper_annotation.py"
+
+
 use rule get_fasta as get_blacklist with:
     output:
         resources.blacklist,
