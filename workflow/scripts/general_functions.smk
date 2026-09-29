@@ -257,6 +257,17 @@ def cutadapt_args(unit, round_):
     return " ".join(args)
 
 
+def te_select_read2_input(wildcards):
+    """
+    Returns BAM file (paired-end) from which read 2 is selected for the TE candidate mapping
+    chain (see select_read2_input, its main-pipeline equivalent)
+    """
+    if DEMULTIPLEXED:
+        return f"results/te_repeats/mapped/{wildcards.sample}.rmdup.sorted.bam"
+    else:
+        return f"results/te_repeats/mapped/merged/{wildcards.sample}.bam"
+
+
 def select_read2_input(wildcards):
     """
     Returns BAM file (paired-end) from which read 2 is selected: the merged inline barcodes,

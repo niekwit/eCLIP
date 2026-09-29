@@ -134,14 +134,6 @@ if TE_REPEATS["enabled"]:
                 log:
                     "logs/te_repeats/samtools_merge/{sample}.log",
 
-        def te_select_read2_input(wildcards):
-            if DEMULTIPLEXED:
-                return (
-                    f"results/te_repeats/mapped/{wildcards.sample}.rmdup.sorted.bam"
-                )
-            else:
-                return f"results/te_repeats/mapped/merged/{wildcards.sample}.bam"
-
         use rule select_read2_pe as te_select_read2_pe with:
             input:
                 te_select_read2_input,
