@@ -23,8 +23,19 @@ ip_total, input_total = len(ip), len(inp)
 
 print(f"IP: {ip_total} locus-assigned reads, input: {input_total} locus-assigned reads")
 
+# With zero reads on either side, RPM/log2FC/Fisher's exact are all undefined (division by zero);
+# no per-locus/family comparison is meaningful, so each enrich() call below returns an empty,
+# schema-compatible table (correct columns, no rows) instead of producing inf/NaN.
+ZERO_TOTAL = ip_total == 0 or input_total == 0
+if ZERO_TOTAL:
+    print("IP and/or input has zero locus-assigned reads: writing empty enrichment tables")
+
 
 def enrich(ip, inp, group_col, meta_cols):
+    columns = meta_cols + ["ip_count", "input_count", "log2fc", "pvalue", "qvalue"]
+    if ZERO_TOTAL:
+        return pd.DataFrame(columns=columns).set_index(pd.Index([], name=group_col))
+
     counts = pd.concat(
         [
             ip.groupby(group_col).size().rename("ip_count"),
