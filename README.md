@@ -87,20 +87,27 @@ Using a non-default `gencode_release` is **not validated against ENCODE** the wa
 
 ## Repeat elements and transposable elements
 
-As in the ENCODE pipeline, reads from repeat elements are **removed** before the genome analysis, and transposable element (TE) derived reads are not analysed separately:
+As in the ENCODE pipeline, reads from repeat elements are **removed** before the genome analysis, and by default transposable element (TE) derived reads are not analysed separately:
 
-1. **Repeat element filter.** After adapter trimming, reads are mapped with STAR to a repeat element reference (`resources/{genome}_repeat_elements.fa`), which is built on the first run: the curated consensus sequences of the species from [Dfam](https://www.dfam.org) (for human ~1,400 families, e.g. LINE-1 (L1HS, L1PA, L1M, ...), Alu, SVA, LTR/ERV, DNA transposons and several small non-coding RNAs) plus the rDNA repeating unit (NCBI). Mapping is end-to-end, and a read may map to up to 30 places (`--outFilterMultimapNmax 30`), so reads from multi-copy elements are caught. **Reads that map are discarded; only the reads that do not map continue to the genome mapping.** The STAR log of this step (`results/star/repeats/`, in the MultiQC report) gives the fraction of reads that were removed.
+1. **Repeat element filter.** After adapter trimming, reads are mapped with STAR to a repeat element reference (`resources/{genome}_repeat_elements.fa`), which is built on the first run: the curated consensus sequences of the species from [Dfam](https://www.dfam.org) (for human ~1,400 families, e.g. LINE-1 (L1HS, L1PA, L1M, ...), Alu, SVA, LTR/ERV, DNA transposons and several small non-coding RNAs) plus the rDNA repeating unit (NCBI). Mapping is end-to-end, and a read may map to up to 30 places (`--outFilterMultimapNmax 30`), so reads from multi-copy elements are caught. **Reads that map are discarded by default; only the reads that do not map continue to the genome mapping** (unless `te_repeats.enabled` is set, see below). The STAR log of this step (`results/star/repeats/`, in the MultiQC report) gives the fraction of reads that were removed.
 2. **Genome mapping.** The remaining reads are mapped to the genome, **keeping only reads with a unique alignment** (`--outFilterMultimapNmax 1`, as ENCODE). Reads from multi-copy TEs that were not caught by the repeat filter are lost in this step.
-3. **Peak calling.** CLIPper, input normalisation and IDR use only these unique, PCR-duplicate removed reads. There is no masking or annotation of peaks with TEs (RepeatMasker), the only region filter is the ENCODE eCLIP blacklist.
+3. **Peak calling.** CLIPper, input normalisation and IDR use only these unique, PCR-duplicate removed reads. There is no masking or annotation of these peaks with TEs (RepeatMasker), the only region filter is the ENCODE eCLIP blacklist.
 
-What this means for TEs:
+What this means for TEs by default:
 
-* Reads that resemble the consensus sequence of a TE family are removed and are not counted anywhere. The repeat-mapped alignments are not kept (they are deleted at the end of the run) and there is no quantification per repeat family.
+* Reads that resemble the consensus sequence of a TE family are removed and are not counted anywhere by the main pipeline.
 * Reads from TE copies that are diverged from the consensus (typically old families such as L2, MIR or old L1M) and that map to a single genomic position are retained, so peaks in TEs can appear in the results. Peaks in TE-derived sequence therefore cover only part of the TE-derived signal.
-* Reads that map equally well to multiple genomic copies are never used, so a locus specific analysis of TE binding is not possible with this workflow.
 * Dfam consensus sequences are used instead of the RepBase sequences of ENCODE (RepBase is not freely available), so the reads that are removed are not exactly the same as in ENCODE.
 
-An analysis of TE-bound RNA (for example enrichment per repeat family over the size-matched input) is **not** part of the workflow.
+### Locus-resolved TE binding analysis (optional)
+
+Setting `te_repeats.enabled: True` in the config adds an opt-in analysis that answers a question the main pipeline cannot: *which individual TE copy is bound*, not just whether TE-derived reads exist. It re-uses the reads discarded in step 1 above (the repeat-mapped BAM is kept instead of deleted) rather than duplicating the repeat filter:
+
+1. Reads that mapped to the repeat consensus reference (step 1) are re-aligned to the full genome with the same uniqueness requirement as the main genome mapping (`--outFilterMultimapNmax 1`). A read fully internal to a repeat copy still multi-maps genome-wide and is dropped here, exactly as in step 2 above; only reads with a unique anchor in the genome — typically a TE-to-flanking-sequence readthrough junction — survive, which is what makes assigning a specific genomic TE locus possible.
+2. Surviving reads are PCR-duplicate removed with the same method as the main pipeline, then intersected with individual TE copies from UCSC RepeatMasker (downloaded automatically) to assign each read to one locus. `te_repeats.require_family_match` (default on) additionally requires that locus's RepeatMasker family to agree with the family the read hit in step 1, as a best-effort cross-check (Dfam and RepeatMasker family names mostly, but not always, agree).
+3. Per IP sample: Fisher's exact test (BH-corrected) of read counts per locus and per family, IP vs size-matched input, normalised against each library's total confidently-assigned read count (not whole-library size) — `results/te_repeats/{sample}.locus_enrichment.tsv` and `.family_enrichment.tsv`. Replicate pairs additionally get a Spearman correlation of log2FC (`results/te_repeats/{s1}_vs_{s2}.reproducibility.txt`), used instead of IDR since IDR is designed for genomic-interval peak calling, not a fixed set of categorical loci/families.
+
+This roughly doubles genome-mapping and dedup work (a second alignment pass on the repeat-mapped reads) and keeps the repeat-mapped BAM instead of deleting it (~1 GB per library in this project's ENCODE validation runs), so it is off by default.
 
 ---
 
@@ -143,22 +150,20 @@ Edit `config/samples.csv`: one row per library, with the matching size-matched i
 
 Single-end example:
 
-```csv
-sample,control,adapter
-RBFOX2_1,RBFOX2_input_1,InvRil19
-RBFOX2_2,RBFOX2_input_2,InvRil19
-RBFOX2_input_1,,InvRil19
-RBFOX2_input_2,,InvRil19
-```
+| sample           | control          | adapter   |
+| ---------------- | ----------------- | --------- |
+| RBFOX2_1         | RBFOX2_input_1    | InvRil19  |
+| RBFOX2_2         | RBFOX2_input_2    | InvRil19  |
+| RBFOX2_input_1   |                    | InvRil19  |
+| RBFOX2_input_2   |                    | InvRil19  |
 
 Paired-end example (extra columns with the inline barcode IDs; `NIL` for barcode-less input):
 
-```csv
-sample,control,barcode_a,barcode_b
-RBFOX2_1,RBFOX2_input_1,A01,B06
-RBFOX2_2,RBFOX2_input_1,C01,D8f
-RBFOX2_input_1,,NIL,NIL
-```
+| sample           | control          | barcode_a | barcode_b |
+| ---------------- | ----------------- | --------- | --------- |
+| RBFOX2_1         | RBFOX2_input_1    | A01       | B06       |
+| RBFOX2_2         | RBFOX2_input_1    | C01       | D8f       |
+| RBFOX2_input_1   |                    | NIL       | NIL       |
 
 Rules for sample names (checked when the workflow starts):
 

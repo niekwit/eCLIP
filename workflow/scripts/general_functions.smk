@@ -204,6 +204,13 @@ def idr_pairs():
     return pairs
 
 
+def sample_units(sample):
+    """
+    Returns the units (wildcard unit) of a sample
+    """
+    return [unit for unit, s in UNITS.items() if s == sample]
+
+
 def control(sample):
     """
     Returns control sample (size-matched input) of IP sample
@@ -365,5 +372,21 @@ def targets():
             for ext in ["bed", "custombed", "narrowPeak", "bb"]
         ]
     )
+
+    # Locus-resolved TE binding analysis (optional)
+    if TE_REPEATS["enabled"]:
+        TARGETS.extend(
+            expand(
+                "results/te_repeats/{sample}.{level}_enrichment.tsv",
+                sample=IP_SAMPLES,
+                level=["locus", "family"],
+            )
+        )
+        TARGETS.extend(
+            [
+                f"results/te_repeats/{s1}_vs_{s2}.reproducibility.txt"
+                for s1, s2 in IDR_PAIRS
+            ]
+        )
 
     return TARGETS

@@ -132,6 +132,28 @@ rule get_repeat_elements:
         "../scripts/get_repeat_elements.py"
 
 
+if TE_REPEATS["enabled"]:
+
+    rule get_repeatmasker_loci:
+        # Individual TE copies (genomic coordinates + family), for locus-resolved TE binding
+        # analysis (workflow/rules/te_repeats.smk)
+        output:
+            resources.repeatmasker_loci,
+        log:
+            "logs/resources/get_repeatmasker_loci.log",
+        cache: False
+        retries: 3
+        conda:
+            "../envs/mapping.yaml"
+        threads: 1
+        resources:
+            runtime=30,
+        params:
+            url=resources.repeatmasker_url,
+        script:
+            "../scripts/parse_repeatmasker.py"
+
+
 rule star_index_genome:
     input:
         fasta=resources.fasta,

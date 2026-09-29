@@ -6,3 +6,5 @@ resources/*
 report.zip
 .downloads/
 clipper_genes.txt
+results/
+logs/

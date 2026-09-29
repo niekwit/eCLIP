@@ -26,7 +26,13 @@ rule star_repeats:
             end=ENDS,
         ),
     output:
-        bam=temp("results/star/repeats/{unit}.Aligned.out.bam"),
+        # Kept (not temp) when te_repeats is enabled: these reads are the candidate pool for
+        # locus-resolved TE binding analysis (workflow/rules/te_repeats.smk)
+        bam=(
+            "results/star/repeats/{unit}.Aligned.out.bam"
+            if TE_REPEATS["enabled"]
+            else temp("results/star/repeats/{unit}.Aligned.out.bam")
+        ),
         log_final="results/star/repeats/{unit}.Log.final.out",
         unmapped=temp(
             expand("results/star/repeats/{{unit}}.Unmapped.out.mate{end}", end=ENDS)

@@ -21,6 +21,10 @@ clipper:
 peaks:
   l10p: 3 # -log10(p-value) cutoff for significant peaks (narrowPeak score and total entropy)
   l2fc: 3 # log2 fold change (over size-matched input) cutoff for significant peaks
+te_repeats: # Locus-resolved TE binding analysis (optional, off by default, see README.md)
+  enabled: False
+  min_reads: 10 # Minimum combined IP + input reads for a TE locus/family to be tested
+  require_family_match: True # Cross-check: the genomic locus's RepeatMasker family must match the family the read hit during repeat element pre-filtering
 resources: # computing resources
   trim:
     cpu: 8

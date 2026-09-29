@@ -57,6 +57,7 @@ Reads are simulated on the transcripts (exons of the longest transcript) of the 
 * **Binding sites:** 3-6 sites per gene, shared by the IP replicates. Reads start around the site (normal distribution, sd 6 nt: the 5' end pile-up of a real eCLIP peak). 25-70 reads per site (some sites are weaker), of which 30% have PCR duplicates (identical UMI and fragment, to test the duplicate removal). Each replicate lacks 10% of the shared sites, and has an extra replicate specific site in 20% of the genes, so that IDR has both reproducible and non-reproducible peaks.
 * **Background:** fragments at random positions of the transcripts (3,000 reads per IP replicate, 9,000 for the input).
 * **Repeat reads:** fragments of the AluY consensus sequence (Dfam DF000000002, downloaded from the Dfam API: <https://www.dfam.org/api/families/DF000000002/sequence?format=fasta>), that should be removed by the repeat element filter (1,500 reads per IP replicate, 3,000 for the input).
+* **TE junction reads:** 40 identical reads per IP replicate spanning a real AluY copy near a test gene (looked up via the UCSC REST API, <https://api.genome.ucsc.edu/getData/track?genome=hg38;track=rmsk;...>) and its unique flanking sequence, meant to exercise the optional locus-resolved TE binding analysis (`te_repeats.enabled`, see README.md), which re-aligns repeat-mapped reads to the genome and keeps only those that map uniquely. In practice, because this test genome is tiny (real sequence only near 28 genes), a handful of the plain repeat-consensus reads above also happen to map uniquely by chance (there often isn't a second real copy of the same variant nearby to make them multi-map, unlike in a real genome) and get assigned to *their* real, incidental TE locus too -- so the locus/family that shows up as enriched in `results/te_repeats/` is not guaranteed to be this specific AluY copy. Either way, this reliably exercises the full locus assignment and enrichment code path with real signal; it does not test the pipeline's ability to reject reads that don't span a genuine unique anchor at production (whole-genome) scale.
 * **Input:** no binding sites, only background and repeat reads. Both IP replicates use the same input (`control` column in `samples.csv`).
 
 The reads are simulated without sequencing errors and have a constant base quality (`I`).
@@ -65,13 +66,15 @@ The reads are simulated without sequencing errors and have a constant base quali
 
 Running the workflow gives (values from the run with the current files):
 
-* ~150 CLIPper peaks per replicate, of which 20 (replicate 1) and 15 (replicate 2) are significant (score 1000 in `results/peaks/{sample}/{sample}.peaks.narrowPeak`).
-* 13 reproducible peaks in `results/idr/RBFOX2_1_vs_RBFOX2_2/`.
+* ~150-165 CLIPper peaks per replicate, of which 19 (replicate 1) and 23 (replicate 2) are significant (score 1000 in `results/peaks/{sample}/{sample}.peaks.narrowPeak`).
+* 19 reproducible peaks in `results/idr/RBFOX2_1_vs_RBFOX2_2/`.
 
 The exact numbers can differ with the versions of the tools, so these are only meant as a sanity check.
+
+With `te_repeats.enabled: True` (see README.md), `results/te_repeats/` additionally has a handful of confidently locus-assigned reads and their IP vs input enrichment (see "TE junction reads" above for why the exact locus/family is not fixed).
 
 ## Limitations
 
 * The reads are simulated, so the data does not test how the workflow handles real data (sequence errors, real UMI distributions, real adapters).
 * Paired-end mode (inline barcode demultiplexing, barcode collapsing) is not tested.
-* The Dfam AluY sequence is downloaded when the data is made; if Dfam changes this family, the repeat reads (but not the genome files) will differ when the data is regenerated.
+* The Dfam AluY sequence and the UCSC RepeatMasker track are downloaded when the data is made; if either changes, the repeat/TE junction reads (but not the genome files) will differ when the data is regenerated.

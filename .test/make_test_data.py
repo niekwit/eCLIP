@@ -162,6 +162,46 @@ def make_read(insert):
     return (umi() + insert + ADAPTER)[:READ_LENGTH]
 
 
+# A real AluY copy near a test gene (real sequence is only retained within FLANK of a gene, see
+# `masked` above): used to build reads spanning the TE-to-flanking-sequence junction, the only
+# repeat-derived reads that can be assigned to an individual TE locus (workflow/rules/te_repeats.smk
+# intersects against RepeatMasker, so the locus needs to be a real, RepeatMasker-annotated one).
+RMSK_API = "https://api.genome.ucsc.edu/getData/track"
+
+
+def find_te_locus(loci, rep_name="AluY"):
+    for start, end in loci:
+        window_start, window_end = max(0, start - FLANK), end + FLANK
+        url = (
+            f"{RMSK_API}?genome=hg38;track=rmsk;chrom=chr21"
+            f";start={window_start};end={window_end}"
+        )
+        entries = json.loads(urllib.request.urlopen(url, timeout=30).read()).get("rmsk", [])
+        for entry in entries:
+            if (
+                entry["repName"] == rep_name
+                and window_start <= entry["genoStart"]
+                and entry["genoEnd"] <= window_end
+            ):
+                return entry
+    return None
+
+
+te_locus = find_te_locus(loci)
+te_junction_reads = []
+if te_locus:
+    te_end = te_locus["genoEnd"]
+    # Spans the last 35 bp of the TE copy and the first 35 bp of unique flanking sequence
+    junction = genome[te_end - 35 : te_end + 35]
+    if "N" not in junction:
+        te_junction_reads = [make_read(junction)] * 40
+        print(
+            f"TE junction test reads: {te_locus['repName']} at chr21:{te_locus['genoStart']}-{te_end}"
+        )
+if not te_junction_reads:
+    print("WARNING: no usable AluY locus found near test genes, no TE junction test reads added")
+
+
 def simulate(genes_with_sites, n_background, n_repeat, reads_per_site=(25, 70)):
     reads = []
     # binding sites: reads that start around the site (5' end pile up), 30% PCR duplicates (same UMI)
@@ -209,7 +249,9 @@ for replicate in (1, 2):
         if random.random() < 0.2:
             sites.append((random.randint(80, max(81, len(seq) - 80)), 0.8))
         ip.append((gene_id, seq, sites))
-    write_fastq(f"RBFOX2_{replicate}", simulate(ip, n_background=3000, n_repeat=1500))
+    reads = simulate(ip, n_background=3000, n_repeat=1500) + te_junction_reads
+    random.shuffle(reads)
+    write_fastq(f"RBFOX2_{replicate}", reads)
 
 # Size-matched input: background only (shared by both replicates)
 input_ = [(gene_id, seq, []) for gene_id, seq, sites in shared]
