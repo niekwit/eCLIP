@@ -51,6 +51,9 @@ class GenomeResources:
             self.dfam_clade = "Homo sapiens"
             self.rdna_accession = "U13369.1"
 
+            # UCSC RepeatMasker table (individual repeat copies, for locus-resolved TE analysis)
+            self.ucsc_build = "hg38"
+
         elif genome == "hg19":
             if gencode_release:
                 raise ValueError("gencode_release is only supported for genome: hg38")
@@ -65,6 +68,7 @@ class GenomeResources:
 
             self.dfam_clade = "Homo sapiens"
             self.rdna_accession = "U13369.1"
+            self.ucsc_build = "hg19"
 
         elif genome == "mm10":
             if gencode_release:
@@ -80,9 +84,19 @@ class GenomeResources:
 
             self.dfam_clade = "Mus musculus"
             self.rdna_accession = "BK000964.3"
+            self.ucsc_build = "mm10"
 
         else:
             raise ValueError(f"Genome {genome} not supported (hg38, hg19 or mm10)")
+
+        # UCSC RepeatMasker table: individual repeat copies (genomic coordinates + family), used
+        # for locus-resolved TE binding analysis (workflow/rules/te_repeats.smk), as opposed to
+        # the family-level Dfam consensus reference above (repeat_fasta) used for the repeat
+        # element pre-filter step
+        self.repeatmasker_url = (
+            f"https://hgdownload.soe.ucsc.edu/goldenPath/{self.ucsc_build}/database/rmsk.txt.gz"
+        )
+        self.repeatmasker_loci = f"resources/{genome}_repeatmasker_te_loci.bed"
 
         # downloaded unzipped file names
         self.fasta = self._file_from_url(self.fasta_url)

@@ -31,6 +31,11 @@ resources = GenomeResources(genome, config.get("gencode_release", ""))
 # Get wildcard values
 PAIRED_END = paired_end()
 DEMULTIPLEXED = PAIRED_END and config.get("demultiplexed", False)
+TE_REPEATS = {
+    "enabled": False,
+    "min_reads": 10,
+    "require_family_match": True,
+} | config.get("te_repeats", {})
 ENDS = [1, 2] if PAIRED_END else [1]
 IP_SAMPLES, INPUT_SAMPLES, SAMPLES = samples(PAIRED_END)
 UNITS = units()
@@ -56,6 +61,7 @@ include: "rules/mapping.smk"
 include: "rules/bigwig.smk"
 include: "rules/peaks.smk"
 include: "rules/idr.smk"
+include: "rules/te_repeats.smk"
 
 
 # Set target rule

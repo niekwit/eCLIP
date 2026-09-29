@@ -1,0 +1,11 @@
+name: te_repeats
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.12
+  - pandas=2.2.3
+  - scipy=1.14.1
+  - statsmodels=0.14.4
+  - bedtools=2.31.1

@@ -204,6 +204,13 @@ def idr_pairs():
     return pairs
 
 
+def sample_units(sample):
+    """
+    Returns the units (wildcard unit) of a sample
+    """
+    return [unit for unit, s in UNITS.items() if s == sample]
+
+
 def control(sample):
     """
     Returns control sample (size-matched input) of IP sample
@@ -248,6 +255,17 @@ def cutadapt_args(unit, round_):
         args = [f"-a {x}" for x in adapters.se_adapters(se_adapter(sample))]
 
     return " ".join(args)
+
+
+def te_select_read2_input(wildcards):
+    """
+    Returns BAM file (paired-end) from which read 2 is selected for the TE candidate mapping
+    chain (see select_read2_input, its main-pipeline equivalent)
+    """
+    if DEMULTIPLEXED:
+        return f"results/te_repeats/mapped/{wildcards.sample}.rmdup.sorted.bam"
+    else:
+        return f"results/te_repeats/mapped/merged/{wildcards.sample}.bam"
 
 
 def select_read2_input(wildcards):
@@ -365,5 +383,21 @@ def targets():
             for ext in ["bed", "custombed", "narrowPeak", "bb"]
         ]
     )
+
+    # Locus-resolved TE binding analysis (optional)
+    if TE_REPEATS["enabled"]:
+        TARGETS.extend(
+            expand(
+                "results/te_repeats/{sample}.{level}_enrichment.tsv",
+                sample=IP_SAMPLES,
+                level=["locus", "family"],
+            )
+        )
+        TARGETS.extend(
+            [
+                f"results/te_repeats/{s1}_vs_{s2}.reproducibility.txt"
+                for s1, s2 in IDR_PAIRS
+            ]
+        )
 
     return TARGETS

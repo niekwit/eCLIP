@@ -96,6 +96,23 @@ properties:
     required:
     - l10p
     - l2fc
+  te_repeats:
+    type: object
+    properties:
+      enabled:
+        type: boolean
+        description: Locus-resolved TE binding analysis (opt-in)
+      min_reads:
+        type: integer
+        minimum: 1
+        description: Minimum combined IP + input reads for a TE locus/family to be tested
+      require_family_match:
+        type: boolean
+        description: Require RepeatMasker locus family to match the repeat pre-filter consensus family
+    required:
+    - enabled
+    - min_reads
+    - require_family_match
   resources:
     type: object
     properties:
