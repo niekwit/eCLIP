@@ -1,6 +1,7 @@
 # Snakemake workflow: `eCLIP`
 
 [![Snakemake](https://img.shields.io/badge/snakemake-≥8.25.5-brightgreen.svg)](https://snakemake.github.io)
+[![Tests](https://github.com/niekwit/eCLIP/actions/workflows/main.yml/badge.svg)](https://github.com/niekwit/eCLIP/actions/workflows/main.yml)
 
 A Snakemake workflow for eCLIP sequencing data analysis, based on the [ENCODE eCLIP pipeline](https://www.encodeproject.org/pipelines/ENCPL357ADL/) (eCLIP-seq Processing Pipeline v2.2, Yeo lab, UCSD). Supports single-end and paired-end (inline barcodes) reads.
 
@@ -49,9 +50,9 @@ MultiQC (FastQC, cutadapt, STAR)
 
 Differences with the ENCODE pipeline:
 
-* The repeat element filter uses a free substitute for RepBase (which is not freely available): the curated Dfam consensus sequences of the species plus the rDNA repeating unit. The repeat-mapped BAM files are not kept.
-* Current versions of the tools (STAR, cutadapt, umi_tools) are used instead of the versions in the SOP. IDR 2.0.2 can not be installed anymore, so IDR 2.0.4.2 is used. Yeo lab scripts that are not on conda (CLIPper, eclipdemux, and the perl/python scripts for input normalisation and IDR) are used at fixed commits.
-* Genome and annotation are from GENCODE (hg38: v29, hg19: v19, mm10: vM25), which is what CLIPper's built-in annotations are based on (see below).
+- The repeat element filter uses a free substitute for RepBase (which is not freely available): the curated Dfam consensus sequences of the species plus the rDNA repeating unit. The repeat-mapped BAM files are not kept.
+- Current versions of the tools (STAR, cutadapt, umi_tools) are used instead of the versions in the SOP. IDR 2.0.2 can not be installed anymore, so IDR 2.0.4.2 is used. Yeo lab scripts that are not on conda (CLIPper, eclipdemux, and the perl/python scripts for input normalisation and IDR) are used at fixed commits.
+- Genome and annotation are from GENCODE (hg38: v29, hg19: v19, mm10: vM25), which is what CLIPper's built-in annotations are based on (see below).
 
 ### Why GENCODE v29 for hg38?
 
@@ -59,16 +60,16 @@ CLIPper does not accept an arbitrary GTF: it ships its own pre-built annotation 
 
 How much does this matter? Genome coordinates are identical across GENCODE releases (same GRCh38 assembly); only the annotation on top of it changes:
 
-| | v29 (2018) | v40 (2022) | v50 (2024, latest) |
-| --- | --- | --- | --- |
-| Protein-coding genes | 19,940 | 19,988 | 20,107 |
-| Protein-coding transcripts | 83,129 | 87,814 | 278,455 |
-| lncRNA genes | 7,635 | 17,748 | 34,866 |
-| Total genes | 58,721 | 61,544 | 78,733 |
+|                            | v29 (2018) | v40 (2022) | v50 (2024, latest) |
+| -------------------------- | ---------- | ---------- | ------------------ |
+| Protein-coding genes       | 19,940     | 19,988     | 20,107             |
+| Protein-coding transcripts | 83,129     | 87,814     | 278,455            |
+| lncRNA genes               | 7,635      | 17,748     | 34,866             |
+| Total genes                | 58,721     | 61,544     | 78,733             |
 
-* **Protein-coding genes:** essentially unchanged (+0.8% from v29 to v50). For an mRNA-binding protein, the gene set CLIPper works with is nearly the same in v29 as in the latest release.
-* **Protein-coding transcript isoforms:** v29 to v40 barely changed (+6%), but v40 to v50 more than tripled (GENCODE's newer releases add many more long-read-supported alternative splice isoforms per gene). CLIPper classifies peaks by transcript region (exon/intron/UTR/proximal vs. distal intron), so a much richer isoform set can shift which region a peak is assigned to, without necessarily changing whether a peak is called there.
-* **lncRNAs:** more than 4x more lncRNA genes are annotated now than in v29. This is the real gap: for an RBP that binds lncRNAs, v29e is missing roughly half of today's annotated lncRNA loci.
+- **Protein-coding genes:** essentially unchanged (+0.8% from v29 to v50). For an mRNA-binding protein, the gene set CLIPper works with is nearly the same in v29 as in the latest release.
+- **Protein-coding transcript isoforms:** v29 to v40 barely changed (+6%), but v40 to v50 more than tripled (GENCODE's newer releases add many more long-read-supported alternative splice isoforms per gene). CLIPper classifies peaks by transcript region (exon/intron/UTR/proximal vs. distal intron), so a much richer isoform set can shift which region a peak is assigned to, without necessarily changing whether a peak is called there.
+- **lncRNAs:** more than 4x more lncRNA genes are annotated now than in v29. This is the real gap: for an RBP that binds lncRNAs, v29e is missing roughly half of today's annotated lncRNA loci.
 
 In short: staying on v29e for ENCODE parity costs almost nothing for protein-coding mRNA analyses, but is a genuine limitation for lncRNA-focused studies or fine isoform-level peak assignment.
 
@@ -76,8 +77,8 @@ In short: staying on v29e for ENCODE parity costs almost nothing for protein-cod
 
 Set `gencode_release` in `config/config.yaml` to any human GENCODE release number (e.g. `"50"` for the latest) to use it instead of v29. Setting it to `"40"` uses CLIPper's other built-in annotation (`GRCh38_v40`) directly, no build step needed. For any other release, CLIPper has no built-in annotation, so one is built automatically from the downloaded GTF (`rule build_clipper_annotation`, `workflow/scripts/build_clipper_annotation.py`):
 
-* one representative transcript per gene (the one with the largest genomic span, the same rule CLIPper's own annotation-building code uses) provides the gene coordinates and the `mrna_length`/`premrna_length` values CLIPper needs for its statistical test;
-* exons of every transcript of a gene are merged into a non-overlapping list, used for splice-aware read assignment.
+- one representative transcript per gene (the one with the largest genomic span, the same rule CLIPper's own annotation-building code uses) provides the gene coordinates and the `mrna_length`/`premrna_length` values CLIPper needs for its statistical test;
+- exons of every transcript of a gene are merged into a non-overlapping list, used for splice-aware read assignment.
 
 This replicates the two files CLIPper's ["Supporting additional species"](https://github.com/YeoLab/clipper/wiki/Supporting-additional-species) wiki page describes, and is passed to CLIPper with `--datadir` rather than modifying the installed package. It only runs when `gencode_release` is set to something other than `"29"` or `"40"`, and only builds these two files, not the full built-in CLIPper data directory (no `_genes.bed`, intron/UTR/poly-A region files etc., which CLIPper's core peak caller does not require, only its separate `clip_analysis` annotation tool does).
 
@@ -95,13 +96,13 @@ As in the ENCODE pipeline, reads from repeat elements are **removed** before the
 
 What this means for TEs by default:
 
-* Reads that resemble the consensus sequence of a TE family are removed and are not counted anywhere by the main pipeline.
-* Reads from TE copies that are diverged from the consensus (typically old families such as L2, MIR or old L1M) and that map to a single genomic position are retained, so peaks in TEs can appear in the results. Peaks in TE-derived sequence therefore cover only part of the TE-derived signal.
-* Dfam consensus sequences are used instead of the RepBase sequences of ENCODE (RepBase is not freely available), so the reads that are removed are not exactly the same as in ENCODE.
+- Reads that resemble the consensus sequence of a TE family are removed and are not counted anywhere by the main pipeline.
+- Reads from TE copies that are diverged from the consensus (typically old families such as L2, MIR or old L1M) and that map to a single genomic position are retained, so peaks in TEs can appear in the results. Peaks in TE-derived sequence therefore cover only part of the TE-derived signal.
+- Dfam consensus sequences are used instead of the RepBase sequences of ENCODE (RepBase is not freely available), so the reads that are removed are not exactly the same as in ENCODE.
 
 ### Locus-resolved TE binding analysis (optional)
 
-Setting `te_repeats.enabled: True` in the config adds an opt-in analysis that answers a question the main pipeline cannot: *which individual TE copy is bound*, not just whether TE-derived reads exist. It re-uses the reads discarded in step 1 above (the repeat-mapped BAM is kept instead of deleted) rather than duplicating the repeat filter:
+Setting `te_repeats.enabled: True` in the config adds an opt-in analysis that answers a question the main pipeline cannot: _which individual TE copy is bound_, not just whether TE-derived reads exist. It re-uses the reads discarded in step 1 above (the repeat-mapped BAM is kept instead of deleted) rather than duplicating the repeat filter:
 
 1. Reads that mapped to the repeat consensus reference (step 1) are re-aligned to the full genome with the same uniqueness requirement as the main genome mapping (`--outFilterMultimapNmax 1`). A read fully internal to a repeat copy still multi-maps genome-wide and is dropped here, exactly as in step 2 above; only reads with a unique anchor in the genome — typically a TE-to-flanking-sequence readthrough junction — survive, which is what makes assigning a specific genomic TE locus possible.
 2. Surviving reads are PCR-duplicate removed with the same method as the main pipeline, then intersected with individual TE copies from UCSC RepeatMasker (downloaded automatically) to assign each read to one locus. `te_repeats.require_family_match` (default on) additionally requires that locus's RepeatMasker family to agree with the family the read hit in step 1, as a best-effort cross-check (Dfam and RepeatMasker family names mostly, but not always, agree).
@@ -135,10 +136,10 @@ Run the workflow from this directory (or from a project directory that has the s
 
 Copy or symlink the FASTQ files of **all** libraries (IP and size-matched input) into `reads/`. The layout is auto-detected from the file names.
 
-| Layout       | File names                                                             |
-| ------------ | ---------------------------------------------------------------------- |
-| Single-end   | `reads/{sample}.fastq.gz`                                              |
-| Paired-end   | `reads/{sample}_R1_001.fastq.gz` and `reads/{sample}_R2_001.fastq.gz`  |
+| Layout     | File names                                                            |
+| ---------- | --------------------------------------------------------------------- |
+| Single-end | `reads/{sample}.fastq.gz`                                             |
+| Paired-end | `reads/{sample}_R1_001.fastq.gz` and `reads/{sample}_R2_001.fastq.gz` |
 
 Paired-end means ENCODE-style eCLIP where read 1 starts with an inline barcode and read 2 starts with the UMI. Single-end means seCLIP, where the first 10 nt of the read are the UMI.
 
@@ -150,26 +151,26 @@ Edit `config/samples.csv`: one row per library, with the matching size-matched i
 
 Single-end example:
 
-| sample           | control          | adapter   |
-| ---------------- | ----------------- | --------- |
-| RBFOX2_1         | RBFOX2_input_1    | InvRil19  |
-| RBFOX2_2         | RBFOX2_input_2    | InvRil19  |
-| RBFOX2_input_1   |                    | InvRil19  |
-| RBFOX2_input_2   |                    | InvRil19  |
+| sample         | control        | adapter  |
+| -------------- | -------------- | -------- |
+| RBFOX2_1       | RBFOX2_input_1 | InvRil19 |
+| RBFOX2_2       | RBFOX2_input_2 | InvRil19 |
+| RBFOX2_input_1 |                | InvRil19 |
+| RBFOX2_input_2 |                | InvRil19 |
 
 Paired-end example (extra columns with the inline barcode IDs; `NIL` for barcode-less input):
 
-| sample           | control          | barcode_a | barcode_b |
-| ---------------- | ----------------- | --------- | --------- |
-| RBFOX2_1         | RBFOX2_input_1    | A01       | B06       |
-| RBFOX2_2         | RBFOX2_input_1    | C01       | D8f       |
-| RBFOX2_input_1   |                    | NIL       | NIL       |
+| sample         | control        | barcode_a | barcode_b |
+| -------------- | -------------- | --------- | --------- |
+| RBFOX2_1       | RBFOX2_input_1 | A01       | B06       |
+| RBFOX2_2       | RBFOX2_input_1 | C01       | D8f       |
+| RBFOX2_input_1 |                | NIL       | NIL       |
 
 Rules for sample names (checked when the workflow starts):
 
-* Only letters, numbers and `_`.
-* IP samples end with `_` and the replicate number (`RBFOX2_1`, `RBFOX2_2`). The rest of the name is the condition: replicates of the same condition are compared with IDR.
-* Sample names can not contain `_vs_`.
+- Only letters, numbers and `_`.
+- IP samples end with `_` and the replicate number (`RBFOX2_1`, `RBFOX2_2`). The rest of the name is the condition: replicates of the same condition are compared with IDR.
+- Sample names can not contain `_vs_`.
 
 All columns are explained in [config/README.md](config/README.md).
 
@@ -205,10 +206,10 @@ snakemake --report report.zip
 
 What to expect on the first run:
 
-* Conda environments are created (a few minutes each; CLIPper is built from source).
-* The reference files are downloaded and indexed: GENCODE genome and annotation, ENCODE blacklist, the Dfam repeat elements, and the Yeo lab scripts. Two STAR indices (genome and repeat elements) are built; the genome index needs roughly 30-40 GB of RAM for human/mouse (the workflow requests 40 GB). This only happens once, in `resources/`.
-* CLIPper is the slowest step: it processes the whole genome annotation and takes hours per IP sample for a full dataset. Give it enough CPUs (`resources: clipper: cpu` in the config).
-* A warning is printed when a condition has only one replicate: peaks are still called for its samples, but no IDR analysis is done.
+- Conda environments are created (a few minutes each; CLIPper is built from source).
+- The reference files are downloaded and indexed: GENCODE genome and annotation, ENCODE blacklist, the Dfam repeat elements, and the Yeo lab scripts. Two STAR indices (genome and repeat elements) are built; the genome index needs roughly 30-40 GB of RAM for human/mouse (the workflow requests 40 GB). This only happens once, in `resources/`.
+- CLIPper is the slowest step: it processes the whole genome annotation and takes hours per IP sample for a full dataset. Give it enough CPUs (`resources: clipper: cpu` in the config).
+- A warning is printed when a condition has only one replicate: peaks are still called for its samples, but no IDR analysis is done.
 
 ---
 
@@ -252,27 +253,27 @@ logs/                                     # log file of every job
 
 Files you will normally use:
 
-| File                                                  | What it is                                                                         |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `results/peaks/{sample}/{sample}.peaks.bed`           | Input normalised, blacklist filtered peaks of one replicate                        |
-| `results/idr/{s1}_vs_{s2}/*.reproducible_peaks.bed`   | Reproducible peaks between two replicates (use these as the final binding sites)   |
-| `results/bigwig/*.bw`                                 | Tracks for a genome browser (+ strand positive, - strand negative)                 |
-| `results/qc/multiqc.html`                             | Quality control (adapter trimming, repeat and genome mapping rates)                |
+| File                                                | What it is                                                                       |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `results/peaks/{sample}/{sample}.peaks.bed`         | Input normalised, blacklist filtered peaks of one replicate                      |
+| `results/idr/{s1}_vs_{s2}/*.reproducible_peaks.bed` | Reproducible peaks between two replicates (use these as the final binding sites) |
+| `results/bigwig/*.bw`                               | Tracks for a genome browser (+ strand positive, - strand negative)               |
+| `results/qc/multiqc.html`                           | Quality control (adapter trimming, repeat and genome mapping rates)              |
 
 Columns of `.peaks.bed` and `.reproducible_peaks.bed`: chromosome, start, end, -log10(p-value) over input, log2 fold change over input, strand. In the `.narrowPeak` files the score is 1000 for significant peaks (`peaks: l10p` and `l2fc` in the config, both 3 by default) and 200 for other peaks. In `.reproducible_peaks.bed` the p-value is the minimum of the two replicates and the fold change the geometric mean.
 
 ### Quick quality check
 
-* MultiQC: most reads should have adapters trimmed after round 1, and the repeat element mapping rate (STAR `repeats`) is typically high for eCLIP; the genome (`genome`) unique mapping rate of the remaining reads should be high (a low rate indicates a wrong genome or a poor library).
-* `results/mapped/*.readnum.txt`: number of usable reads after PCR duplicate removal (ENCODE recommends roughly 1 million or more for IP samples).
-* `results/idr/*/*.idr.out.png`: replicate rank plot; reproducible replicates show a clear diagonal.
+- MultiQC: most reads should have adapters trimmed after round 1, and the repeat element mapping rate (STAR `repeats`) is typically high for eCLIP; the genome (`genome`) unique mapping rate of the remaining reads should be high (a low rate indicates a wrong genome or a poor library).
+- `results/mapped/*.readnum.txt`: number of usable reads after PCR duplicate removal (ENCODE recommends roughly 1 million or more for IP samples).
+- `results/idr/*/*.idr.out.png`: replicate rank plot; reproducible replicates show a clear diagonal.
 
 ### Troubleshooting
 
-* *"Following files not found"* at start: file names in `reads/` do not match the `sample` column.
-* *IDR fails*: it needs a reasonable number of peaks in both replicates (hundreds); very shallow or failed libraries do not have these.
-* *STAR runs out of memory*: increase `mem_mb` of the STAR rules (`star_index_genome`, `star_repeats`, `star_genome` in `workflow/rules/`) or use fewer parallel jobs.
-* Failed jobs write their errors to `logs/<tool>/<sample>.log`.
+- _"Following files not found"_ at start: file names in `reads/` do not match the `sample` column.
+- _IDR fails_: it needs a reasonable number of peaks in both replicates (hundreds); very shallow or failed libraries do not have these.
+- _STAR runs out of memory_: increase `mem_mb` of the STAR rules (`star_index_genome`, `star_repeats`, `star_genome` in `workflow/rules/`) or use fewer parallel jobs.
+- Failed jobs write their errors to `logs/<tool>/<sample>.log`.
 
 ---
 
@@ -284,6 +285,6 @@ The workflow was validated on two ENCODE eCLIP experiments (U2AF2, paired-end): 
 
 ## Reference
 
-Van Nostrand, E.L., Pratt, G.A., Shishkin, A.A. et al. Robust transcriptome-wide discovery of RNA-binding protein binding sites with enhanced CLIP (eCLIP). *Nat Methods* 13, 508–514 (2016).
+Van Nostrand, E.L., Pratt, G.A., Shishkin, A.A. et al. Robust transcriptome-wide discovery of RNA-binding protein binding sites with enhanced CLIP (eCLIP). _Nat Methods_ 13, 508–514 (2016).
 
 Yeo lab eCLIP pipeline: https://github.com/YeoLab/eclip
