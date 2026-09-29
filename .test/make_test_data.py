@@ -25,12 +25,16 @@ DOWNLOADS = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, ".downloads
 
 CHR21_URL = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/chromosomes/chr21.fa.gz"
 GTF_URL = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_29/gencode.v29.annotation.gtf.gz"
-BLACKLIST_URL = "https://www.encodeproject.org/files/ENCFF269URO/@@download/ENCFF269URO.bed.gz"
+BLACKLIST_URL = (
+    "https://www.encodeproject.org/files/ENCFF269URO/@@download/ENCFF269URO.bed.gz"
+)
 ALU_URL = "https://www.dfam.org/api/families/DF000000002/sequence?format=fasta"  # AluY consensus
 
 SEED = 7
 MIN_TRANSCRIPT_LENGTH = 400  # nt of exons of the longest transcript of a gene
-MAX_GENE_END = 20_000_000  # only genes at the start of chr21 (keeps the genome file small)
+MAX_GENE_END = (
+    20_000_000  # only genes at the start of chr21 (keeps the genome file small)
+)
 FLANK = 2000  # bp of real sequence on each side of a gene
 ADAPTER = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCACAGTCAACAATATCTCGTATGCCGTCTTCTGCTTG"
 READ_LENGTH = 75
@@ -115,7 +119,9 @@ masked = "".join(masked)
 os.makedirs(os.path.join(HERE, "resources"), exist_ok=True)
 os.makedirs(os.path.join(HERE, "reads"), exist_ok=True)
 
-with open(os.path.join(HERE, "resources", "GRCh38.primary_assembly.genome.fa"), "w") as f:
+with open(
+    os.path.join(HERE, "resources", "GRCh38.primary_assembly.genome.fa"), "w"
+) as f:
     f.write(">chr21\n")
     for i in range(0, len(masked), 60):
         f.write(masked[i : i + 60] + "\n")
@@ -176,7 +182,9 @@ def find_te_locus(loci, rep_name="AluY"):
             f"{RMSK_API}?genome=hg38;track=rmsk;chrom=chr21"
             f";start={window_start};end={window_end}"
         )
-        entries = json.loads(urllib.request.urlopen(url, timeout=30).read()).get("rmsk", [])
+        entries = json.loads(urllib.request.urlopen(url, timeout=30).read()).get(
+            "rmsk", []
+        )
         for entry in entries:
             if (
                 entry["repName"] == rep_name
@@ -199,7 +207,9 @@ if te_locus:
             f"TE junction test reads: {te_locus['repName']} at chr21:{te_locus['genoStart']}-{te_end}"
         )
 if not te_junction_reads:
-    print("WARNING: no usable AluY locus found near test genes, no TE junction test reads added")
+    print(
+        "WARNING: no usable AluY locus found near test genes, no TE junction test reads added"
+    )
 
 
 def simulate(genes_with_sites, n_background, n_repeat, reads_per_site=(25, 70)):

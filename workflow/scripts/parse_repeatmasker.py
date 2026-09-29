@@ -42,7 +42,9 @@ if __name__ == "__main__":
             for line in f_in:
                 n_total += 1
                 fields = line.rstrip("\n").split("\t")
-                rep_class = fields[REP_CLASS].split("/")[0]  # e.g. "DNA/hAT-Charlie" -> "DNA"
+                rep_class = fields[REP_CLASS].split("/")[
+                    0
+                ]  # e.g. "DNA/hAT-Charlie" -> "DNA"
                 if rep_class not in TE_CLASSES:
                     continue
                 n_kept += 1

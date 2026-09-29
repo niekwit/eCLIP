@@ -41,7 +41,9 @@ class GenomeResources:
                 self.clipper_species = f"hg38v{release}"
                 self.clipper_datadir = f"resources/clipper_annotation/hg38_v{release}"
                 self.clipper_gff = f"{self.clipper_datadir}/{self.clipper_species}.AS.STRUCTURE.COMPILED.gff"
-                self.clipper_exons_bed = f"{self.clipper_datadir}/regions/{self.clipper_species}_exons.bed"
+                self.clipper_exons_bed = (
+                    f"{self.clipper_datadir}/regions/{self.clipper_species}_exons.bed"
+                )
 
             # ENCODE eCLIP blacklist (GRCh38)
             self.blacklist_url = "https://www.encodeproject.org/files/ENCFF269URO/@@download/ENCFF269URO.bed.gz"
@@ -57,7 +59,9 @@ class GenomeResources:
         elif genome == "hg19":
             if gencode_release:
                 raise ValueError("gencode_release is only supported for genome: hg38")
-            base_url = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/"
+            base_url = (
+                "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/"
+            )
             self.fasta_url = f"{base_url}GRCh37.p13.genome.fa.gz"
             self.gtf_url = f"{base_url}gencode.v19.annotation.gtf.gz"
             self.clipper_species = "hg19"
@@ -73,7 +77,9 @@ class GenomeResources:
         elif genome == "mm10":
             if gencode_release:
                 raise ValueError("gencode_release is only supported for genome: hg38")
-            base_url = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M25/"
+            base_url = (
+                "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_M25/"
+            )
             self.fasta_url = f"{base_url}GRCm38.primary_assembly.genome.fa.gz"
             self.gtf_url = f"{base_url}gencode.vM25.annotation.gtf.gz"
             self.clipper_species = "mm10v25"
@@ -93,9 +99,7 @@ class GenomeResources:
         # for locus-resolved TE binding analysis (workflow/rules/te_repeats.smk), as opposed to
         # the family-level Dfam consensus reference above (repeat_fasta) used for the repeat
         # element pre-filter step
-        self.repeatmasker_url = (
-            f"https://hgdownload.soe.ucsc.edu/goldenPath/{self.ucsc_build}/database/rmsk.txt.gz"
-        )
+        self.repeatmasker_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{self.ucsc_build}/database/rmsk.txt.gz"
         self.repeatmasker_loci = f"resources/{genome}_repeatmasker_te_loci.bed"
 
         # downloaded unzipped file names

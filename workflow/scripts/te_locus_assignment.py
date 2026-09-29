@@ -34,10 +34,14 @@ with tempfile.NamedTemporaryFile(suffix=".tsv") as tmp:
     with open(tmp.name, "w") as f:
         subprocess.run(
             [
-                "bedtools", "intersect",
-                "-abam", snakemake.input.bam,
-                "-b", snakemake.input.loci,
-                "-bed", "-wo",
+                "bedtools",
+                "intersect",
+                "-abam",
+                snakemake.input.bam,
+                "-b",
+                snakemake.input.loci,
+                "-bed",
+                "-wo",
             ],  # fmt: skip
             stdout=f,
             stderr=sys.stderr,
@@ -66,6 +70,15 @@ hits["locus_id"] = (
     + ":" + hits["rep_name"]
 )  # fmt: skip
 
-hits[["qname", "locus_id", "chrom", "start", "end", "rep_name", "rep_family", "rep_class"]].to_csv(
-    snakemake.output[0], sep="\t", index=False
-)
+hits[
+    [
+        "qname",
+        "locus_id",
+        "chrom",
+        "start",
+        "end",
+        "rep_name",
+        "rep_family",
+        "rep_class",
+    ]
+].to_csv(snakemake.output[0], sep="\t", index=False)

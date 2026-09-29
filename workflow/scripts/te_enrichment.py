@@ -28,7 +28,9 @@ print(f"IP: {ip_total} locus-assigned reads, input: {input_total} locus-assigned
 # schema-compatible table (correct columns, no rows) instead of producing inf/NaN.
 ZERO_TOTAL = ip_total == 0 or input_total == 0
 if ZERO_TOTAL:
-    print("IP and/or input has zero locus-assigned reads: writing empty enrichment tables")
+    print(
+        "IP and/or input has zero locus-assigned reads: writing empty enrichment tables"
+    )
 
 
 def enrich(ip, inp, group_col, meta_cols):
@@ -36,16 +38,24 @@ def enrich(ip, inp, group_col, meta_cols):
     if ZERO_TOTAL:
         return pd.DataFrame(columns=columns).set_index(pd.Index([], name=group_col))
 
-    counts = pd.concat(
-        [
-            ip.groupby(group_col).size().rename("ip_count"),
-            inp.groupby(group_col).size().rename("input_count"),
-        ],
-        axis=1,
-    ).fillna(0).astype(int)
+    counts = (
+        pd.concat(
+            [
+                ip.groupby(group_col).size().rename("ip_count"),
+                inp.groupby(group_col).size().rename("input_count"),
+            ],
+            axis=1,
+        )
+        .fillna(0)
+        .astype(int)
+    )
 
     if meta_cols:
-        meta = pd.concat([ip, inp]).drop_duplicates(group_col).set_index(group_col)[meta_cols]
+        meta = (
+            pd.concat([ip, inp])
+            .drop_duplicates(group_col)
+            .set_index(group_col)[meta_cols]
+        )
         counts = counts.join(meta)
 
     counts = counts[counts["ip_count"] + counts["input_count"] >= min_reads].copy()
@@ -65,7 +75,12 @@ def enrich(ip, inp, group_col, meta_cols):
     return counts.drop(columns=["ip_rpm", "input_rpm"]).sort_values("qvalue")
 
 
-locus = enrich(ip, inp, "locus_id", ["chrom", "start", "end", "rep_name", "rep_family", "rep_class"])
+locus = enrich(
+    ip,
+    inp,
+    "locus_id",
+    ["chrom", "start", "end", "rep_name", "rep_family", "rep_class"],
+)
 locus.to_csv(snakemake.output.locus, sep="\t")
 
 family = enrich(ip, inp, "rep_family", [])

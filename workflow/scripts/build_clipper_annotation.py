@@ -54,9 +54,13 @@ with open(snakemake.input.gtf) as f:
             )
         )
 
-exons = pd.DataFrame(exons, columns=["chrom", "start", "end", "strand", "gene_id", "transcript_id"])
+exons = pd.DataFrame(
+    exons, columns=["chrom", "start", "end", "strand", "gene_id", "transcript_id"]
+)
 exons["length"] = exons["end"] - exons["start"]
-print(f"{len(exons)} exons, {exons.transcript_id.nunique()} transcripts, {exons.gene_id.nunique()} genes")
+print(
+    f"{len(exons)} exons, {exons.transcript_id.nunique()} transcripts, {exons.gene_id.nunique()} genes"
+)
 
 # One representative transcript per gene: the one with the largest genomic span, as CLIPper's own
 # build_transcript_data_gtf() picks (not necessarily the one with the most spliced sequence)
