@@ -20,4 +20,6 @@ grep -q 'return PyModule_Create(&peaksmodule);' clipper/src/peaksmodule.cc
 # Python 3.7 adds -B compiler_compat to the link command, which does not work with the conda toolchain
 export LDSHARED="gcc -pthread -shared"
 
-pip install --no-deps .
+# python -m pip, not pip: a pip earlier in PATH (e.g. ~/.local/bin, which stays ahead of the
+# environment after conda activation) would install CLIPper outside the environment
+python -m pip install --no-deps .
