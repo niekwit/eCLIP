@@ -34,7 +34,7 @@ DEMULTIPLEXED = PAIRED_END and config.get("demultiplexed", False)
 TE_REPEATS = {
     "enabled": False,
     "min_reads": 10,
-    "require_family_match": True,
+    "require_family_match": False,
 } | config.get("te_repeats", {})
 ENDS = [1, 2] if PAIRED_END else [1]
 IP_SAMPLES, INPUT_SAMPLES, SAMPLES = samples(PAIRED_END)

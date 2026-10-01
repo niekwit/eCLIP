@@ -22,11 +22,8 @@ peaks:
   l2fc: 3 # log2 fold change (over size-matched input) cutoff for significant peaks
 te_repeats: # Locus-resolved TE binding analysis (optional, off by default, see README.md)
   enabled: True
-  # min_reads and require_family_match are relaxed from the defaults here because this fixture's
-  # single simulated TE junction locus (see make_test_data.py) only has one confidently-assigned
-  # read per replicate, and its short simulated junction read hits a closely related Alu
-  # subfamily rather than the exact RepeatMasker-called AluY at the repeat pre-filter step -- a
-  # real illustration of why require_family_match is an optional, not strict, cross-check.
+  # min_reads is relaxed from the default here because this small fixture has few
+  # confidently locus-assigned reads per TE locus (see make_test_data.py)
   min_reads: 1 # Minimum combined IP + input reads for a TE locus/family to be tested
   require_family_match: False # Cross-check: the genomic locus's RepeatMasker family must match the family the read hit during repeat element pre-filtering
 resources: # computing resources

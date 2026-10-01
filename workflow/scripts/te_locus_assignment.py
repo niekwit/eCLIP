@@ -16,6 +16,7 @@ candidate_family lookup) -- both vocabularies mostly overlap but are not guarant
 this is a best-effort cross-check, not a strict identity.
 """
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -30,24 +31,37 @@ COLUMNS = [
     "overlap",
 ]  # fmt: skip
 
+# bamtobed gives BED6 per read (`intersect -abam -bed` gives BED12, which shifts every column)
 with tempfile.NamedTemporaryFile(suffix=".tsv") as tmp:
     with open(tmp.name, "w") as f:
+        bamtobed = subprocess.Popen(
+            ["bedtools", "bamtobed", "-i", snakemake.input.bam],
+            stdout=subprocess.PIPE,
+            stderr=sys.stderr,
+        )
         subprocess.run(
-            [
-                "bedtools",
-                "intersect",
-                "-abam",
-                snakemake.input.bam,
-                "-b",
-                snakemake.input.loci,
-                "-bed",
-                "-wo",
-            ],  # fmt: skip
+            ["bedtools", "intersect", "-a", "stdin", "-b", snakemake.input.loci, "-wo"],
+            stdin=bamtobed.stdout,
             stdout=f,
             stderr=sys.stderr,
             check=True,
         )
-    hits = pd.read_csv(tmp.name, sep="\t", header=None, names=COLUMNS)
+        bamtobed.stdout.close()
+        if bamtobed.wait() != 0:
+            raise RuntimeError("bedtools bamtobed failed")
+    if os.path.getsize(tmp.name) == 0:
+        hits = pd.DataFrame(columns=COLUMNS)
+    else:
+        # read without names= : pandas silently turns surplus leading columns into an index
+        hits = pd.read_csv(tmp.name, sep="\t", header=None)
+        if hits.shape[1] != len(COLUMNS):
+            raise ValueError(
+                f"Expected {len(COLUMNS)} columns from bedtools intersect, got {hits.shape[1]}"
+            )
+        hits.columns = COLUMNS
+
+# bamtobed appends /1 or /2 to paired reads; the consensus family lookup has plain names
+hits["qname"] = hits["qname"].astype(str).str.replace(r"/[12]$", "", regex=True)
 
 print(f"{len(hits)} read-locus overlaps ({hits['qname'].nunique()} unique reads)")
 

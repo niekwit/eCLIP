@@ -24,7 +24,7 @@ peaks:
 te_repeats: # Locus-resolved TE binding analysis (optional, off by default, see README.md)
   enabled: False
   min_reads: 10 # Minimum combined IP + input reads for a TE locus/family to be tested
-  require_family_match: True # Cross-check: the genomic locus's RepeatMasker family must match the family the read hit during repeat element pre-filtering
+  require_family_match: False # Cross-check: also require the genomic locus's RepeatMasker name to match the Dfam family the read hit during repeat element pre-filtering. Off by default: the two naming schemes differ systematically (e.g. Dfam L1PB1_3end vs RepeatMasker L1PB1, HERVH vs HERVH-int), so it mostly removes reads for naming reasons
 resources: # computing resources
   trim:
     cpu: 8
